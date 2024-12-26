@@ -1,0 +1,37 @@
+{
+    "name": "webdernargor/ratricat",
+    "description": "PHP mini mvc framework",
+    "type": "project",
+    "require": {
+        "php": ">=7.0",
+        "jenssegers/blade": "^1.4",
+        "bramus/router": "^1.6",
+        "firebase/php-jwt": "^6.10"
+    },
+    "require-dev": {
+        "php": ">=7.0",
+        "jenssegers/blade": "^1.4",
+        "bramus/router": "^1.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "license": "MIT",
+    "scripts": {
+        "serve": "php serve.php",
+        "migrate": "php bootstrap/app.php migrate",
+        "rollback": "php bootstrap/app.php rollback",
+        "create-db": "php bootstrap/create-migration.php",
+        "post-create-project-cmd": [
+            "composer install"
+        ]
+    },
+    "scripts-descriptions": {
+    "create-db": "สร้างไฟล์ migration ใหม่ (ใช้: composer create-db -- [table_name])"
+},
+    "config": {
+        "process-timeout": 0
+    }
+}

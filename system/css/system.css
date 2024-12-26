@@ -1,0 +1,26 @@
+.dev_container {
+    position: absolute;
+    bottom: 0;
+    right: 2%;
+    padding: 5px 10px;
+    border-radius: 10px;
+ background-color:#a3a3a3;
+}
+
+
+.show{
+    display: flex;
+}
+.hide{
+    display: none;
+}
+#dev_button {
+    display: block;
+    text-decoration: none;
+    background-color: #000;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 49;
+}
