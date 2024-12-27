@@ -25,4 +25,8 @@ class HomeController
         return VIEW('user.register', []);
         }
 
+    public function logout(){
+        deleteCookie('login_token');
+        return redirect('/');
+        }
 }

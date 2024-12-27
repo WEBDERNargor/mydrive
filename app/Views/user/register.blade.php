@@ -58,8 +58,25 @@
                }else{
                    alert(response.message);
                }
+           },
+            error: function(xhr, status, error) {
+               // จัดการกับ error status code 400
+               if (xhr.status === 400) {
+                   let response = JSON.parse(xhr.responseText);
+                   Swal.fire({
+                       icon: 'error',
+                       title: 'เกิดข้อผิดพลาด',
+                       text: response.message || 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง'
+                   });
+               } else {
+                   Swal.fire({
+                       icon: 'error',
+                       title: 'เกิดข้อผิดพลาด',
+                       text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง'
+                   });
+               }
            }
-       },
+       }
     );
    });
 

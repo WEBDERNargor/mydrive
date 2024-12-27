@@ -90,3 +90,20 @@ function route($name, $params = [])
     
     throw new Exception("Route with name '$name' not found.");
 }
+// ฟังก์ชันสำหรับตั้งค่าคุกกี้
+function setCookieValue($name, $value, $days) {
+    $expires = time() + ($days * 86400); // 86400 วินาทีในหนึ่งวัน
+    setcookie($name, $value, $expires, "/"); // path = "/" หมายถึงคุกกี้สามารถเข้าถึงได้ทั่วทั้งเว็บไซต์
+}
+
+// ฟังก์ชันสำหรับอ่านค่าคุกกี้
+function getCookieValue($name) {
+    return isset($_COOKIE[$name]) ? $_COOKIE[$name] : null;
+}
+
+// ฟังก์ชันสำหรับลบคุกกี้
+function deleteCookie($name) {
+    setcookie($name, "", time() - 3600, "/"); // ตั้งเวลาหมดอายุให้ย้อนหลังไปหนึ่งชั่วโมง
+}
+
+

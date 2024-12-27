@@ -10,5 +10,6 @@
 
 
 addRoute('get', '/', 'home', 'App\Controllers\HomeController@index');
+addRoute('get', '/logout', 'logout', 'App\Controllers\HomeController@logout');
 addRoute('get', '/login', 'login', 'App\Controllers\HomeController@login');
 addRoute('get', '/register', 'register', 'App\Controllers\HomeController@register');

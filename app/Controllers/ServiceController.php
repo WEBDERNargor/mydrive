@@ -24,7 +24,7 @@ class ServiceController
 
             $email = $_POST['email'];
             $password = $_POST['password'];
-            $res = $this->sql->param("SELECT * FROM users WHERE m_email = ?", [$email]);
+            $res = $this->sql->param("SELECT *,CONCAT(m_fname,' ',m_lname) as m_fullname FROM users WHERE m_email = ?", [$email]);
             if ($res->rowCount() > 0) {
                 $user = $res->fetch(PDO::FETCH_OBJ);
                 if (password_verify($password . $user->m_salt, $user->m_password)) {
@@ -103,7 +103,7 @@ class ServiceController
         }
 
         $userId = $decoded->user_id;
-        $user = $this->sql->single("SELECT * FROM users WHERE m_id = :id", ["id" => $userId]);
+        $user = $this->sql->single("SELECT *,CONCAT(m_fname,' ',m_lname) as m_fullname FROM users WHERE m_id = :id", ["id" => $userId]);
 
         if (!$user) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบผู้ใช้"], 404);
@@ -123,7 +123,7 @@ class ServiceController
     {
         $decoded = $this->verifyToken($token);
         if ($decoded) {
-            $row = $this->sql->single("SELECT * FROM users WHERE m_id = :id", ["id" => $decoded->user_id]);
+            $row = $this->sql->single("SELECT *,CONCAT(m_fname,' ',m_lname) as m_fullname FROM users WHERE m_id = :id", ["id" => $decoded->user_id]);
             return $row;
         } else {
             return [];

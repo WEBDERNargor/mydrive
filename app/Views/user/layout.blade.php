@@ -1,3 +1,11 @@
+@php
+use App\Controllers\ServiceController;
+$service=new ServiceController();
+$token=getCookieValue('login_token');
+if ($token!=null){
+$user_login=$service->verifyTokenServer($token);
+}
+@endphp
 @yield('top_php')
 <!DOCTYPE html>
 <html lang="en">
@@ -13,18 +21,19 @@
       }
     }
     </script>
-    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
     @section('head')
     <title>{{NAME()}}</title>
     @show
 </head>
 <body>
+
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('user.components.navbar')
     @yield('content')
     @include('user.components.footer')
   
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+   
     @section('scripts')
     <script></script>
     @show

@@ -13,17 +13,18 @@
       }
     }
     </script>
-    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
+
     @section('head')
     <title>{{NAME()}}</title>
     @show
 </head>
 <body>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('admin.components.navbar')
     @yield('content')
     @include('admin.components.footer')
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+  
     @section('scripts')
     <script></script>
     @show
