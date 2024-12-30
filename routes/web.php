@@ -13,3 +13,9 @@ addRoute('get', '/', 'home', 'App\Controllers\HomeController@index');
 addRoute('get', '/logout', 'logout', 'App\Controllers\HomeController@logout');
 addRoute('get', '/login', 'login', 'App\Controllers\HomeController@login');
 addRoute('get', '/register', 'register', 'App\Controllers\HomeController@register');
+addRoute('get', '/upload', 'upload', 'App\Controllers\HomeController@upload');
+addRoute('get', '/file/{filename}', 'getFile', 'App\Controllers\FileController@getFile');
+
+addRouteMiddleware('get','/login','App\Middlewares\LoginMiddleware@checkalreadylogin');
+addRouteMiddleware('get','/register','App\Middlewares\LoginMiddleware@checkalreadylogin');
+addRouteMiddleware('get','/upload','App\Middlewares\LoginMiddleware@handle');

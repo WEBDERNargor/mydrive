@@ -3,3 +3,4 @@ vendor
 node_modules
 storage/cache
 composer.lock
+storage/uploads

@@ -10,11 +10,11 @@
             <!-- Desktop Menu (Center) -->
             <div class="hidden md:flex items-center justify-center flex-1">
                 <div class="flex space-x-4">
-                    <a href="#" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Home</a>
-                    <a href="#" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">About</a>
+                    <a href="{{route('home')}}" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">my file</a>
+                    <a href="{{route('upload')}}" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Upload</a>
                     
                     <!-- Service Dropdown -->
-                    <div class="relative">
+                    {{-- <div class="relative">
                         <button id="desktopServicesButton" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center">
                             Services
                             <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,41 +28,11 @@
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Service 3</a>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
-                    <!-- Products Dropdown -->
-                    <div class="relative">
-                        <button id="desktopProductsButton" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center">
-                            Products
-                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div id="desktopProductsDropdown" class="hidden absolute z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                            <div class="py-1">
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Product 1</a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Product 2</a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Product 3</a>
-                            </div>
-                        </div>
-                    </div>
+                    
 
-                    <!-- Resources Dropdown -->
-                    <div class="relative">
-                        <button id="desktopResourcesButton" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center">
-                            Resources
-                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div id="desktopResourcesDropdown" class="hidden absolute z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                            <div class="py-1">
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Blog</a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Documentation</a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Help Center</a>
-                            </div>
-                        </div>
-                    </div>
+                
 
                 </div>
             </div>
@@ -108,10 +78,10 @@
     <!-- Mobile menu -->
     <div id="mobileMenu" class="hidden md:hidden">
         <div class="px-2 pt-2 pb-3 space-y-1">
-            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Home</a>
-            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">About</a>
+            <a href="{{route('home')}}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">my file</a>
+            <a href="{{route('upload')}}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Upload</a>
             
-            <!-- Mobile Services Dropdown -->
+            {{-- <!-- Mobile Services Dropdown -->
             <div class="relative">
                 <button id="mobileServicesButton" class="w-full flex justify-between items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
                     Services
@@ -124,37 +94,11 @@
                     <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Service 2</a>
                     <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Service 3</a>
                 </div>
-            </div>
+            </div> --}}
 
-            <!-- Mobile Products Dropdown -->
-            <div class="relative">
-                <button id="mobileProductsButton" class="w-full flex justify-between items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    Products
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                <div id="mobileProductsDropdown" class="hidden px-4">
-                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Product 1</a>
-                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Product 2</a>
-                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Product 3</a>
-                </div>
-            </div>
+           
 
-            <!-- Mobile Resources Dropdown -->
-            <div class="relative">
-                <button id="mobileResourcesButton" class="w-full flex justify-between items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    Resources
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-                <div id="mobileResourcesDropdown" class="hidden px-4">
-                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Blog</a>
-                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Documentation</a>
-                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Help Center</a>
-                </div>
-            </div>
+           
 
             <!-- Mobile Profile Section -->
             @if(isset($user_login['m_id']))

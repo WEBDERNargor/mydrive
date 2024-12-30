@@ -1,3 +1,7 @@
 <?php
 addRoute('post', '/api/login', 'login_api', 'App\Controllers\ServiceController@login');
 addRoute('post', '/api/register', 'register_api', 'App\Controllers\ServiceController@register');
+// File routes
+addRoute('post', '/api/upload', 'upload_api', 'App\Controllers\FileController@upload');
+
+addRoute('post', '/api/upload-chunk', 'uploadchunk_api', 'App\Controllers\FileController@uploadChunk');

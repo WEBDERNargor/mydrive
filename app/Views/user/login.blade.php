@@ -11,8 +11,8 @@
         <h1 class="text-2xl font-bold">Login</h1>
         <form id="login_form" action="" method="POST" class="w-full flex flex-col items-center">
             
-            <input type="email" name="email" placeholder="Email" class="w-3/4 h-10 border-2 border-gray-300 rounded-xl mt-4 px-4">
-            <input type="password" name="password" placeholder="Password" class="w-3/4 h-10 border-2 border-gray-300 rounded-xl mt-4 px-4">
+            <input required type="email" name="email" placeholder="Email" class="w-3/4 h-10 border-2 border-gray-300 rounded-xl mt-4 px-4">
+            <input required type="password" name="password" placeholder="Password" class="w-3/4 h-10 border-2 border-gray-300 rounded-xl mt-4 px-4">
             <button type="submit" class="w-3/4 h-10 bg-blue-500 text-white rounded-xl mt-4 hover:bg-blue-700">Login</button>
             <hr>
             <a href="#" class="w-3/4 h-10 bg-red-500 text-white rounded-xl mt-4 hover:bg-red-700 static flex justify-center items-center">Google</a>
@@ -42,7 +42,7 @@
                        icon: 'error',
                        title: 'เกิดข้อผิดพลาด',
                        text: response.message
-                   });
+                   }); 
                }
            },
            error: function(xhr, status, error) {
