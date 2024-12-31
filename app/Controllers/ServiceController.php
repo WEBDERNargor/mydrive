@@ -24,11 +24,11 @@ class ServiceController
 
             $email = $_POST['email'];
             $password = $_POST['password'];
-            $res = $this->sql->param("SELECT *,CONCAT(m_fname,' ',m_lname) as m_fullname FROM users WHERE m_email = ?", [$email]);
+            $res = $this->sql->param("SELECT *,CONCAT(u_fname,' ',u_lname) as u_fullname FROM users WHERE u_email = ?", [$email]);
             if ($res->rowCount() > 0) {
                 $user = $res->fetch(PDO::FETCH_OBJ);
-                if (password_verify($password . $user->m_salt, $user->m_password)) {
-                    $token = $this->generateJWT($user->m_id, (1 * 24 * 60 * 60 * 1000));
+                if (password_verify($password . $user->u_salt, $user->u_password)) {
+                    $token = $this->generateJWT($user->u_id, (1 * 24 * 60 * 60 * 1000));
                     $this->jsonResponse(['status' => 'success', 'message' => 'Login successful', "token" => $token]);
                 } else {
                     $this->jsonResponse(['status' => 'error', 'message' => 'Invalid password'], 401);
@@ -55,7 +55,7 @@ class ServiceController
             return $this->jsonResponse(["status" => "error", "message" => "กรุณาระบุอีเมลและรหัสผ่าน"], 400);
         }
 
-        $user = $this->sql->single("SELECT * FROM users WHERE m_email = :email", ["email" => $email]);
+        $user = $this->sql->single("SELECT * FROM users WHERE u_email = :email", ["email" => $email]);
 
         if ($user) {
             return $this->jsonResponse(["status" => "error", "message" => "อีเมลนี้มีผู้ใช้งานแล้ว"], 400);
@@ -63,7 +63,7 @@ class ServiceController
         $salt = uniqid();
         $password = password_hash($password . $salt, PASSWORD_DEFAULT);
 
-        $this->sql->param("INSERT INTO users (m_email, m_password,m_salt,m_fname,m_lname) VALUES (:email, :password,:salt,:fname,:lname)", ["email" => $email, "password" => $password, "salt" => $salt, "fname" => $fname, "lname" => $lname]);
+        $this->sql->param("INSERT INTO users (u_email, u_password,u_salt,u_fname,u_lname) VALUES (:email, :password,:salt,:fname,:lname)", ["email" => $email, "password" => $password, "salt" => $salt, "fname" => $fname, "lname" => $lname]);
 
         return $this->jsonResponse(["status" => "success", "message" => "ลงทะเบียนสำเร็จ"]);
     }
@@ -103,7 +103,7 @@ class ServiceController
         }
 
         $userId = $decoded->user_id;
-        $user = $this->sql->single("SELECT *,CONCAT(m_fname,' ',m_lname) as m_fullname FROM users WHERE m_id = :id", ["id" => $userId]);
+        $user = $this->sql->single("SELECT *,CONCAT(u_fname,' ',u_lname) as u_fullname FROM users WHERE u_id = :id", ["id" => $userId]);
 
         if (!$user) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบผู้ใช้"], 404);
@@ -112,9 +112,9 @@ class ServiceController
         return $this->jsonResponse([
             "status" => "success",
             "user" => [
-                "id" => $user['id'],
-                "email" => $user['email'],
-                "name" => $user['name']
+                "id" => $user['u_id'],
+                "email" => $user['u_email'],
+                "name" => $user['u_fullname']
             ]
         ]);
     }
@@ -123,7 +123,7 @@ class ServiceController
     {
         $decoded = $this->verifyToken($token);
         if ($decoded) {
-            $row = $this->sql->single("SELECT *,CONCAT(m_fname,' ',m_lname) as m_fullname FROM users WHERE m_id = :id", ["id" => $decoded->user_id]);
+            $row = $this->sql->single("SELECT *,CONCAT(u_fname,' ',u_lname) as u_fullname FROM users WHERE u_id = :id", ["id" => $decoded->user_id]);
             return $row;
         } else {
             return [];

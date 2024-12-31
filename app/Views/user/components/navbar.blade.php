@@ -38,7 +38,7 @@
             </div>
 
             <!-- Profile Dropdown (Right) -->
-            @if(isset($user_login['m_id']))
+            @if(isset($user_login['u_id']))
             <div class="hidden md:flex items-center">
                 <div class="relative">
                     <button id="profileButton" class="flex items-center text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
@@ -101,7 +101,7 @@
            
 
             <!-- Mobile Profile Section -->
-            @if(isset($user_login['m_id']))
+            @if(isset($user_login['u_id']))
             <div class="border-t border-gray-200 pt-4">
                 <button id="mobileProfileButton" class="w-full flex justify-between items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
                     <div class="flex items-center">
