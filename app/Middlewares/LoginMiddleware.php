@@ -22,7 +22,7 @@ class LoginMiddleware
         }
 
         $user_login=$this->service->verifyTokenServer($token);
-        if (!isset($user_login['m_id'])){
+        if (!isset($user_login['u_id'])){
             redirect('/login');
             exit();
         }
@@ -33,7 +33,7 @@ class LoginMiddleware
         $token=getCookieValue('login_token');
         if ($token!=null){
         $user_login=$this->service->verifyTokenServer($token);
-        if (isset($user_login['m_id'])){
+        if (isset($user_login['u_id'])){
             redirect('/');
             exit();
         }

@@ -6,7 +6,8 @@
         "php": ">=7.0",
         "jenssegers/blade": "^1.4",
         "bramus/router": "^1.6",
-        "firebase/php-jwt": "^6.10"
+        "firebase/php-jwt": "^6.10",
+        "intervention/image": "^3.10"
     },
     "require-dev": {
         "php": ">=7.0",

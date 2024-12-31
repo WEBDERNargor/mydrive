@@ -1,0 +1,1 @@
+schtasks /create /tn Cleanup Old Uploads /tr php c:\laragon\www\mydrive\app\Console\cleanup_old_uploads.php /sc hourly

@@ -43,7 +43,7 @@
                 <div class="relative">
                     <button id="profileButton" class="flex items-center text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
                         <img class="h-8 w-8 rounded-full" src="https://picsum.photos/300/300" alt="Profile">
-                        <span class="ml-2">{{ $user_login['m_fullname'] }}</span>
+                        <span class="ml-2">{{ $user_login['u_fullname'] }}</span>
                         <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -106,7 +106,7 @@
                 <button id="mobileProfileButton" class="w-full flex justify-between items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
                     <div class="flex items-center">
                         <img class="h-8 w-8 rounded-full" src="https://picsum.photos/300/300" alt="Profile">
-                        <span class="ml-3 text-base font-medium text-gray-700">{{ $user_login['m_fullname'] }}</span>
+                        <span class="ml-3 text-base font-medium text-gray-700">{{ $user_login['u_fullname'] }}</span>
                     </div>
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
