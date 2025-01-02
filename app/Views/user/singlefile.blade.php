@@ -434,9 +434,11 @@
             playPauseBtn.addEventListener('click', togglePlayPause);
 
             // Timeline handling
+            let wasPlaying = false;
+            
             progressContainer.addEventListener('mousedown', (e) => {
                 isSeeking = true;
-                video.pause();
+                wasPlaying = !video.paused;
                 updateVideoProgress(e);
                 showLoading();
             });
@@ -450,7 +452,7 @@
             document.addEventListener('mouseup', () => {
                 if (isSeeking) {
                     isSeeking = false;
-                    if (!video.paused) {
+                    if (wasPlaying) {
                         video.play()
                             .catch(error => {
                                 if (error.name !== 'AbortError') {
@@ -617,16 +619,38 @@
             }
 
             // Handle page visibility change
+            let videoElement = null;
+
             document.addEventListener('visibilitychange', function() {
-                if (document.hidden && !video.paused) {
-                    video.pause();
+                if (document.hidden) {
+                    if (video) {
+                        video.pause();
+                        videoElement = video;
+                        video = null;
+                    }
+                } else {
+                    if (videoElement) {
+                        video = videoElement;
+                        videoElement = null;
+                    }
                 }
             });
 
-            // Handle page unload
+            // Cleanup when leaving page
             window.addEventListener('beforeunload', function() {
-                if (!video.paused) {
+                if (video) {
                     video.pause();
+                    video.src = '';
+                    video.load();
+                }
+            });
+
+            // Release resources when navigating away
+            window.addEventListener('unload', function() {
+                if (video) {
+                    video.pause();
+                    video.src = '';
+                    video.load();
                 }
             });
 
