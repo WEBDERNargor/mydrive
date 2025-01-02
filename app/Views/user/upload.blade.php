@@ -142,7 +142,8 @@
                 handleFiles(e.originalEvent.dataTransfer.files);
             });
 
-            fileInput.on('change', function() {
+            fileInput.on('change', function(e) {
+                e.preventDefault();
                 handleFiles(this.files);
             });
 
@@ -479,9 +480,6 @@
                 handleFiles(e.originalEvent.dataTransfer.files);
             });
 
-            function handleFiles(files) {
-                uploadFiles(files);
-            }
         });
     </script>
 @endsection
