@@ -195,7 +195,10 @@
                                 <video class="video-player"
                                     @if ($file->has_thumbnail==1) poster="{{ URL() }}/thumnail/{{ $fileName }}" @endif
                                     src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}"
-                                    preload="metadata">
+                                    preload="auto"
+                                    playsinline
+                                    controlsList="nodownload"
+                                    loading="lazy">
                                     Your browser does not support the video tag.
                                 </video>
                                 <div class="video-controls">
