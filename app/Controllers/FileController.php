@@ -32,12 +32,12 @@ class FileController
         $headers = getallheaders();
         $token = $headers['Authorization'] ?? null;
         if (!$token) {
-            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token","head"=>$headers], 401);
         }
         $token = str_replace('Bearer ', '', $token);
         $user = $this->service->verifyTokenServer($token);
         if (!isset($user['u_id'])) {
-            return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ"], 401);
+            return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ","head"=>$headers], 401);
 
         }
         $res = $this->sql->param("SELECT * FROM files WHERE u_id=?", [$user['u_id']]);
