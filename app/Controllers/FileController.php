@@ -420,7 +420,7 @@ class FileController
         fseek($file, $offset);
 
         // Stream the video in chunks
-        $chunkSize = 8192; // 8KB chunks for faster initial loading
+        $chunkSize = 512 * 1024; // 512KB chunks - optimized for smooth playback
         $bytesRemaining = $length;
 
         while ($bytesRemaining > 0 && !feof($file)) {
