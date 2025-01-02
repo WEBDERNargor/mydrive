@@ -421,7 +421,7 @@
                     formData.append('totalChunks', totalChunks);
 
                     try {
-                        const response = await fetch('{{ route('uploadfile_api') }}', {
+                        const response = await fetch("{{ route('uploadchunk_api') }}", {
                             method: 'POST',
                             headers: {
                                 'Authorization': 'Bearer ' + token
