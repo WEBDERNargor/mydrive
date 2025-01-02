@@ -207,7 +207,7 @@
                                     </div>
                                     <div class="controls-row">
                                         <div class="left-controls">
-                                            <button class="control-button play-pause">
+                                            <button class="control-button play-pause" disabled>
                                                 <i class="fas fa-play"></i>
                                             </button>
                                             <div class="volume-container">
@@ -342,12 +342,22 @@
                 }
             }
 
+            // Set video properties for faster loading
+            video.preload = "auto";
+            video.addEventListener('canplay', function() {
+                // วิดีโอพร้อมเล่นแล้ว
+                playPauseBtn.disabled = false;
+            });
+
             // Event Listeners
             playPauseBtn.addEventListener('click', () => {
                 if (video.paused) {
-                    video.play();
-                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    startControlsTimer();
+                    // เช็คว่าวิดีโอพร้อมเล่นหรือยัง
+                    if (video.readyState >= 3) {
+                        video.play();
+                        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        startControlsTimer();
+                    }
                 } else {
                     video.pause();
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
@@ -378,6 +388,21 @@
                     stopeff.classList.add('hidden');
                 }, 300);
                 showControls();
+            });
+
+            // เพิ่ม loading indicator
+            video.addEventListener('waiting', function() {
+                // แสดง loading effect ถ้าต้องการ
+                playeff.classList.add('hidden');
+                stopeff.classList.add('hidden');
+            });
+
+            video.addEventListener('playing', function() {
+                // ซ่อน loading effect
+                playeff.classList.remove('hidden');
+                setTimeout(() => {
+                    playeff.classList.add('hidden');
+                }, 300);
             });
 
             // Volume control
