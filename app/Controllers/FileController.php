@@ -32,7 +32,7 @@ class FileController
         $headers = getallheaders();
         $token = $headers['authorization'] ?? null;
         if (!$token) {
-            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token","head"=>$headers], 401);
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
         }
         $token = str_replace('Bearer ', '', $token);
         $user = $this->service->verifyTokenServer($token);
