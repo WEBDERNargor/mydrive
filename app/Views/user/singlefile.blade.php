@@ -42,8 +42,8 @@
 
         .video-player {
             width: 100%;
-            height: 100%;
-            cursor: pointer;
+            height: auto;
+            display: block;
         }
 
         .video-controls {
@@ -145,7 +145,6 @@
         .loading-container {
             z-index: 20;
             transition: opacity 0.3s ease-in-out;
-            pointer-events: none;
         }
 
         .loading-spinner {
@@ -461,24 +460,6 @@
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                 }
             }
-
-            // คลิกที่วิดีโอเพื่อเล่น/หยุด
-            video.addEventListener('click', (e) => {
-                // ถ้าคลิกที่ controls ไม่ต้องทำอะไร
-                if (e.target.closest('.video-controls')) {
-                    return;
-                }
-                togglePlayPause();
-            });
-
-            // Double click เพื่อเข้า/ออก fullscreen
-            video.addEventListener('dblclick', (e) => {
-                // ถ้าคลิกที่ controls ไม่ต้องทำอะไร
-                if (e.target.closest('.video-controls')) {
-                    return;
-                }
-                toggleFullscreen();
-            });
 
             playPauseBtn.addEventListener('click', togglePlayPause);
 
