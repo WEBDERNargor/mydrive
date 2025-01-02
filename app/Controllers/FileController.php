@@ -423,12 +423,23 @@ class FileController
         $chunkSize = 512 * 1024; // 512KB chunks - optimized for smooth playback
         $bytesRemaining = $length;
 
-        while ($bytesRemaining > 0 && !feof($file)) {
+        // Check if client disconnected
+        if (connection_status() != CONNECTION_NORMAL) {
+            fclose($file);
+            exit;
+        }
+
+        while ($bytesRemaining > 0 && !feof($file) && connection_status() == CONNECTION_NORMAL) {
             $bytesToRead = min($chunkSize, $bytesRemaining);
             $data = fread($file, $bytesToRead);
             echo $data;
             flush();
             $bytesRemaining -= strlen($data);
+
+            // Check connection status after each chunk
+            if (connection_status() != CONNECTION_NORMAL) {
+                break;
+            }
         }
 
         fclose($file);

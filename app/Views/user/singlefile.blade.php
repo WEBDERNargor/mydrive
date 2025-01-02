@@ -534,6 +534,27 @@
             window.addEventListener('resize', () => {
                 isMobile = window.innerWidth <= 991;
             });
+
+            // Cleanup function
+            function cleanup() {
+                if (video) {
+                    video.pause();
+                    video.src = '';
+                    video.load();
+                }
+            }
+
+            // Handle page visibility change
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    cleanup();
+                }
+            });
+
+            // Handle page unload
+            window.addEventListener('beforeunload', function() {
+                cleanup();
+            });
         });
 
         function copyShareLink() {
