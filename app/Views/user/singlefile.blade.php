@@ -51,22 +51,17 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-            padding: 20px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            opacity: 1;
             transition: opacity 0.3s ease;
         }
 
-        .video-controls.opacity-0 {
+        .video-controls.hidden {
             opacity: 0;
             pointer-events: none;
-        }
-
-        .video-controls.opacity-100 {
-            opacity: 1;
-            pointer-events: auto;
         }
 
         .progress-bar {
@@ -198,10 +193,6 @@
             .controls-row {
                 padding: 5px 0;
             }
-
-            .video-controls {
-                padding: 15px;
-            }
         }
     </style>
     <title>{{$file->file_name}} | {{NAME()}}</title>
@@ -241,7 +232,7 @@
                                         <i class="fas fa-spinner fa-3x"></i>
                                     </div>
                                 </div>
-                                <div class="video-controls opacity-100">
+                                <div class="video-controls">
                                     <div class="progress-container relative w-full h-4 bg-gray-200 rounded cursor-pointer">
                                         <!-- Buffer bar -->
                                         <div class="buffer-bar absolute top-0 left-0 h-full bg-gray-400 rounded opacity-50"></div>
@@ -392,25 +383,23 @@
 
             // Show/hide controls
             function showControls() {
-                controls.classList.remove('opacity-0');
-                controls.classList.add('opacity-100');
-                isControlsVisible = true;
-                if (!isMobile) {
-                    startControlsTimer();
+                if (!isControlsVisible) {
+                    controls.classList.remove('hidden');
+                    isControlsVisible = true;
                 }
+                startControlsTimer();
             }
 
             function hideControls() {
-                if (!video.paused && !isMobile) {
-                    controls.classList.remove('opacity-100');
-                    controls.classList.add('opacity-0');
+                if (isControlsVisible && !video.paused) {
+                    controls.classList.add('hidden');
                     isControlsVisible = false;
                 }
             }
 
             function startControlsTimer() {
                 clearTimeout(controlsTimeout);
-                if (!isMobile) {
+                if (!video.paused) {
                     controlsTimeout = setTimeout(hideControls, 3000);
                 }
             }
@@ -479,16 +468,7 @@
                 if (e.target.closest('.video-controls')) {
                     return;
                 }
-
-                if (isMobile) {
-                    if (!isControlsVisible) {
-                        showControls();
-                    } else {
-                        togglePlayPause();
-                    }
-                } else {
-                    togglePlayPause();
-                }
+                togglePlayPause();
             });
 
             // Double click เพื่อเข้า/ออก fullscreen
@@ -745,35 +725,6 @@
                     setTimeout(() => {
                         playeff.classList.add('hidden');
                     }, 300);
-                }
-            });
-
-            // อัพเดทสถานะ mobile เมื่อ resize
-            window.addEventListener('resize', () => {
-                const wasMobile = isMobile;
-                isMobile = window.innerWidth <= 991;
-                
-                // ถ้าเปลี่ยนจาก mobile เป็น desktop
-                if (wasMobile && !isMobile) {
-                    if (!video.paused) {
-                        startControlsTimer();
-                    }
-                }
-                // ถ้าเปลี่ยนจาก desktop เป็น mobile
-                else if (!wasMobile && isMobile) {
-                    showControls();
-                }
-            });
-
-            // แสดง controls เมื่อวิดีโอหยุด
-            video.addEventListener('pause', () => {
-                showControls();
-            });
-
-            // ซ่อน controls เมื่อวิดีโอเล่น (เฉพาะ desktop)
-            video.addEventListener('play', () => {
-                if (!isMobile) {
-                    startControlsTimer();
                 }
             });
         });
