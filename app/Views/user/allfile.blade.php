@@ -68,9 +68,13 @@
                 <span class="ml-4  font-semibold text-sm md:text:md xl:text-lg">${data[index].file_name }</span>
             </div>
             <div class="flex gap-2">
-                <a href="${url}/share/${data[index].file_id}" class="bg-blue-500 text-white px-2 py-1 lg:px-4 lg:py-2 text-sm md:text:md xl:text-lg rounded-lg hover:bg-blue-600  ">Url</a>
-                <button class="bg-red-500 text-white px-2 py-1 lg:px-4 lg:py-2 text-sm md:text-md xl:text-lg rounded-lg hover:bg-red-600 ">Delete</button>
-            </div>
+                <a target="_new" href="${url}/share/${data[index].file_id}" class="bg-blue-500 text-white px-2 py-1 lg:px-4 lg:py-2 text-sm md:text:md xl:text-lg rounded-lg hover:bg-blue-600  ">Url</a>
+                <button data-id="${data[index].file_id}" class="delfile bg-red-500 text-white px-2 py-1 lg:px-4 lg:py-2 text-sm md:text-md xl:text-lg rounded-lg hover:bg-red-600 ">Delete</button>
+                <select data-id="${data[index].file_id}" class="file-public-select border-2">
+                    <option ${data[index].file_public==0?`selected`:``} value="0">private</option>
+                     <option ${data[index].file_public==1?`selected`:``} value="1">public</option>
+                    </select>
+                </div>
         </div>
         `;
                 }
@@ -85,12 +89,119 @@
             if (arr1.length !== arr2.length) return false;
 
             for (let i = 0; i < arr1.length; i++) {
-                if (arr1[i].name !== arr2[i].name || arr1[i].price !== arr2[i].price) {
+                if (arr1[i].file_name !== arr2[i].file_name || arr1[i].file_public !== arr2[i].file_public) {
                     return false;
                 }
             }
 
             return true;
         }
+        $(document).on('click', '.delfile', function() {
+            let id = $(this).data('id');
+
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, delete it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+
+                    $.ajax({
+                        url: "{{ route('deletefile_api') }}",
+                        type: "DELETE",
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        },
+                        data: {
+                            id: id
+                        },
+                        success: function(response) {
+                            if (response.status == 'success') {
+                                Swal.fire({
+                                    title: "success",
+                                    text: response.message,
+                                    icon: "success",
+                                    timer: 2000,
+                                    timerProgressBar: true,
+                                }).then((result) => {
+                                    get_data();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: "Error",
+                                    text: response.message,
+                                    icon: "error"
+                                });
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            Swal.fire({
+                                title: "Error",
+                                text: jqXHR.responseJSON.message,
+                                icon: "error",
+                            });
+                        },
+                        dataType: "json"
+                    });
+
+
+
+                }
+            });
+
+
+
+
+        });
+
+        $(document).on('change', '.file-public-select', function() {
+        let id = $(this).data('id');
+        let value = $(this).val();
+
+        $.ajax({
+            url: "{{ route('updatefilepublic_api') }}",
+            type: "PATCH",
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            data: {
+                id: id,
+                is_public: value
+            },
+            success: function(response) {
+                if (response.status == 'success') {
+                    Swal.fire({
+                        title: "Updated!",
+                        text: response.message,
+                        icon: "success",
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
+                    get_data();
+                } else {
+                    Swal.fire({
+                        title: "Error",
+                        text: response.message,
+                        icon: "error"
+                    });
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Swal.fire({
+                    title: "Error",
+                    text: jqXHR.responseJSON.message,
+                    icon: "error",
+                    timer: 5000,
+                    timerProgressBar: true
+                });
+            }
+        });
+    });
     </script>
 @endsection

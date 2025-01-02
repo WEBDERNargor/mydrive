@@ -90,7 +90,9 @@
                 Swal.fire({
                     title: "Error",
                     text: "Password not match",
-                    icon: "error"
+                    icon: "error",
+                    timer: 5000,
+                    timerProgressBar: true,
                 });
                 return;
             }
@@ -107,14 +109,34 @@
                 },
                 success: function(response) {
                     if (response.status == 'success') {
-                        alert('Change password success');
-                        toggleModal();
+                        Swal.fire({
+                            title: "success",
+                            text: "Change password success",
+                            icon: "success",
+                            timer: 5000,
+                            timerProgressBar: true,
+                        }).then(() => {
+                            toggleModal();
+                        });
+
                     } else {
-                        alert('Change password fail');
+                        Swal.fire({
+                            title: "Error",
+                            text: response.message,
+                            icon: "error",
+                            timer: 5000,
+                            timerProgressBar: true,
+                        });
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    alert("Error");
+                    Swal.fire({
+                        title: "Error",
+                        text: jqXHR.responseJSON.message,
+                        icon: "error",
+                        timer: 5000,
+                        timerProgressBar: true,
+                    });
                 },
                 dataType: "json"
             });

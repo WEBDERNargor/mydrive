@@ -219,7 +219,9 @@
                         title: 'No Internet Connection',
                         text: 'Please check your internet connection and try again.',
                         icon: 'error',
-                        confirmButtonText: 'OK'
+                        confirmButtonText: 'OK',
+                        timer: 5000,
+                        timerProgressBar: true
                     });
                     return;
                 }
@@ -295,7 +297,9 @@
                                     title: 'Upload failed',
                                     text: 'Invalid server response',
                                     icon: 'error',
-                                    confirmButtonText: 'OK'
+                                    confirmButtonText: 'OK',
+                                    timer: 5000,
+                                    timerProgressBar: true
                                 });
                                 return;
                             }
@@ -305,6 +309,8 @@
                                     title: 'Upload failed',
                                     text: response.message,
                                     icon: 'error',
+                                    timer: 5000,
+                                    timerProgressBar: true,
                                     confirmButtonText: 'OK'
                                 });
                                 return;
@@ -322,7 +328,9 @@
                                         title: 'Upload Complete',
                                         text: 'All files have been uploaded successfully!',
                                         icon: 'success',
-                                        confirmButtonText: 'OK'
+                                        confirmButtonText: 'OK',
+                                        timer: 5000,
+                                        timerProgressBar: true,
                                     }).then((e) => {
                                         window.location.reload();
                                     });
@@ -334,7 +342,7 @@
                             if (!isOnline) {
                                 errorMessages.html(
                                     '<p class="text-red-500">Internet connection lost. Upload paused.</p>'
-                                    );
+                                );
                                 return;
                             }
                             // เรียกใช้ฟังก์ชันทำความสะอาดเมื่อเกิดข้อผิดพลาด
@@ -343,7 +351,9 @@
                                 title: 'Upload failed',
                                 text: `An error occurred during the upload process: ${textStatus} - ${errorThrown}`,
                                 icon: 'error',
-                                confirmButtonText: 'OK'
+                                confirmButtonText: 'OK',
+                                timer: 5000,
+                                timerProgressBar: true
                             });
                         }
                     });
@@ -364,7 +374,13 @@
                         'Authorization': 'Bearer ' + token
                     },
                     error: function(xhr, status, error) {
-                        console.error('Error cleaning up failed upload:', error);
+                        Swal.fire({
+                            title: "Error",
+                            text: jqXHR.responseJSON.message,
+                            icon: "error",
+                            timer: 5000,
+                            timerProgressBar: true,
+                        });
                     }
                 });
             }

@@ -1,5 +1,33 @@
 @extends('user.layout')
+@section("top_php")
 
+
+
+@php
+    use App\Controllers\ServiceController;
+    $service = new ServiceController();
+    $token = getCookieValue('login_token');
+    if ($file->file_public == 0 && $token == null) {
+    http_response_code(403);
+    echo 'You are not authorized to view this file.';
+    exit();
+}
+
+    if ($token != null) {
+        $user_login = $service->verifyTokenServer($token);
+    }
+    if($file->file_public == 0 and $user_login['u_id'] != $file->u_id){
+        http_response_code(403);
+        echo 'You are not authorized to view this file.';
+        exit();
+
+    }
+
+@endphp
+
+
+
+@endsection
 @section('head')
     <style>
         .video-container {
@@ -125,6 +153,7 @@
             }
         }
     </style>
+    <title>{{$file->file_name}} | {{NAME()}}</title>
 @endsection
 
 @section('content')

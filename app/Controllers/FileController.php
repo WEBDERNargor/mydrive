@@ -393,4 +393,78 @@ class FileController
         echo json_encode($data, JSON_UNESCAPED_UNICODE);
         exit;
     }
+
+    public function deletefile_api()
+    {
+        $headers = getallheaders();
+        $token = $headers['Authorization'] ?? null;
+        if ($token == null) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
+        }
+        $token = str_replace('Bearer ', '', $token);
+
+        $user = $this->service->verifyTokenServer($token);
+        if (!isset($user['u_id'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ"], 401);
+        }
+        parse_str(file_get_contents("php://input"), $data);
+
+        if (!isset($data['id'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่ได้รับค่าไอดีของไฟล์"], 401);
+        }
+        $id = $data['id'];
+        $res = $this->sql->param("SELECT * FROM files WHERE u_id=? AND file_id=?", [$user['u_id'], $id]);
+        $row = $res->fetch(PDO::FETCH_ASSOC);
+        if (!isset($row['file_id'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบไฟล์"], 401);
+        }
+        if (file_exists($this->uploadPath . $row['file_raw_name'] . "." . $row['file_ext'])) {
+            unlink($this->uploadPath . $row['file_raw_name'] . "." . $row['file_ext']);
+        }
+        if ($row['has_thumbnail'] == 1) {
+            if (file_exists($this->uploadPath . "thumbnails/" . $row['file_raw_name'] . ".png")) {
+                unlink($this->uploadPath . "thumbnails/" . $row['file_raw_name'] . ".png");
+            }
+        }
+        $res_delete = $this->sql->param("DELETE FROM files WHERE u_id=? AND file_id=?", [$user['u_id'], $row['file_id']]);
+        if ($res_delete) {
+            return $this->jsonResponse(["status" => "success", "message" => "ลบไฟล์สำเร็จ"], 201);
+        } else {
+            return $this->jsonResponse(["status" => "error", "message" => "ลบไม่สำเร็จ"], 500);
+        }
+
+    }
+
+    public function updatefilepublic_api()
+    {
+        $headers = getallheaders();
+        $token = $headers['Authorization'] ?? null;
+        if ($token == null) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
+        }
+        $token = str_replace('Bearer ', '', $token);
+        $user = $this->service->verifyTokenServer($token);
+        if (!isset($user['u_id'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ"], 401);
+        }
+        parse_str(file_get_contents("php://input"), $data);
+        if (!isset($data['id'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่ได้รับค่าไอดีของไฟล์"], 401);
+        }
+        $id = $data['id'];
+        $res = $this->sql->param("SELECT * FROM files WHERE u_id=? AND file_id=?", [$user['u_id'], $id]);
+        $row = $res->fetch(PDO::FETCH_ASSOC);
+        if (!isset($row['file_id'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบไฟล์"], 401);
+        }
+
+
+        $res_update = $this->sql->param("UPDATE files SET file_public=? WHERE u_id=? AND file_id=?", [$data['is_public'], $user['u_id'], $row['file_id']]);
+        if ($res_update) {
+            return $this->jsonResponse(["status" => "success", "message" => "แก้ไขสำเร็จ"], 201);
+        } else {
+            return $this->jsonResponse(["status" => "error", "message" => "แก้ไขไมม่สำเร็จ"], 500);
+        }
+    }
+
 }

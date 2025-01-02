@@ -6,7 +6,7 @@
             <!-- Logo -->
             <div class="flex-shrink-0 flex items-center">
                 <a href="{{ route('home') }}" class="flex items-center">
-                <img class="h-8 w-auto" src="{{ URL() }}/images/logo.png" alt="Logo">
+                    <img class="h-8 w-auto" src="{{ URL() }}/images/logo.png" alt="Logo">
                 </a>
             </div>
 
@@ -63,7 +63,8 @@
                                 <a href="{{ route('profile') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
                                 <a href="{{ route('logout') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                                    class="logout-btn block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign
+                                    out</a>
                             </div>
                         </div>
                     </div>
@@ -138,7 +139,7 @@
                             class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Your
                             Profile</a>
                         <a href="{{ route('logout') }}"
-                            class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Sign
+                            class="logout-btn block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Sign
                             out</a>
                     </div>
                 </div>
@@ -147,7 +148,7 @@
                     <a href="{{ route('login') }}"
                         class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">Login</a>
                     <a href="{{ route('register') }}"
-                        class="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700">Register</a>
+                        class=" block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700">Register</a>
                 </div>
             @endif
         </div>
@@ -179,7 +180,7 @@
             $('#desktopResourcesDropdown').toggleClass('hidden');
             // Close other desktop dropdowns
             $('#desktopServicesDropdown, #desktopProductsDropdown, #profileDropdown').addClass(
-            'hidden');
+                'hidden');
         });
 
         // Profile dropdown toggle
@@ -237,5 +238,24 @@
                 $('#mobileMenu').addClass('hidden');
             }
         });
+    });
+    $(document).on('click', '.logout-btn', function(e) {
+        e.preventDefault();
+
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to logout?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, logout"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{{ route('logout') }}";
+            }
+        });
+
     });
 </script>
