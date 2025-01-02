@@ -5,7 +5,9 @@
         <div class="flex justify-between h-16">
             <!-- Logo -->
             <div class="flex-shrink-0 flex items-center">
+                <a href="{{ route('home') }}" class="flex items-center">
                 <img class="h-8 w-auto" src="{{ URL() }}/images/logo.png" alt="Logo">
+                </a>
             </div>
 
             <!-- Desktop Menu (Center) -->
