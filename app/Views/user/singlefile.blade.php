@@ -83,6 +83,7 @@
             position: absolute;
             left: 0;
             top: 0;
+            transition: width 0.1s ease-in-out;
         }
 
         .controls-row {
@@ -135,6 +136,28 @@
         .time-display {
             font-size: 14px;
             font-family: Arial, sans-serif;
+        }
+
+        .buffer-bar {
+            transition: width 0.1s ease-in-out;
+        }
+
+        .loading-spinner {
+            z-index: 10;
+        }
+
+        .loading-spinner i {
+            font-size: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         @media (max-width: 991px) {
@@ -202,8 +225,15 @@
                                     Your browser does not support the video tag.
                                 </video>
                                 <div class="video-controls">
-                                    <div class="progress-bar">
-                                        <div class="progress"></div>
+                                    <div class="progress-container relative w-full h-4 bg-gray-200 rounded cursor-pointer">
+                                        <!-- Buffer bar -->
+                                        <div class="buffer-bar absolute top-0 left-0 h-full bg-gray-400 rounded opacity-50"></div>
+                                        <!-- Progress bar -->
+                                        <div class="progress absolute top-0 left-0 h-full bg-blue-500 rounded"></div>
+                                        <!-- Loading spinner -->
+                                        <div class="loading-spinner hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                            <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                                        </div>
                                     </div>
                                     <div class="controls-row">
                                         <div class="left-controls">
@@ -290,12 +320,14 @@
             const container = document.querySelector('.video-container');
             const video = container.querySelector('.video-player');
             const controls = container.querySelector('.video-controls');
+            const progressContainer = container.querySelector('.progress-container');
+            const bufferBar = container.querySelector('.buffer-bar');
+            const progress = container.querySelector('.progress');
+            const loadingSpinner = container.querySelector('.loading-spinner');
             const playPauseBtn = container.querySelector('.play-pause');
             const volumeBtn = container.querySelector('.volume');
             const volumeSlider = container.querySelector('.volume-slider');
             const volumeLevel = container.querySelector('.volume-level');
-            const progressBar = container.querySelector('.progress-bar');
-            const progress = container.querySelector('.progress');
             const currentTimeDisplay = container.querySelector('.current-time');
             const durationDisplay = container.querySelector('.duration');
             const fullscreenBtn = container.querySelector('.fullscreen');
@@ -310,6 +342,25 @@
                 const minutes = Math.floor(seconds / 60);
                 seconds = Math.floor(seconds % 60);
                 return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            // แสดง/ซ่อน loading spinner
+            function showLoading() {
+                loadingSpinner.classList.remove('hidden');
+            }
+
+            function hideLoading() {
+                loadingSpinner.classList.add('hidden');
+            }
+
+            // อัพเดท buffer bar
+            function updateBuffer() {
+                if (video.buffered.length > 0) {
+                    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                    const duration = video.duration;
+                    const width = (bufferedEnd / duration) * 100;
+                    bufferBar.style.width = `${width}%`;
+                }
             }
 
             // Update progress bar
@@ -351,12 +402,14 @@
 
             // Event Listeners
             let isPlayPending = false;
+            let isSeeking = false;
 
             function togglePlayPause() {
-                if (isPlayPending) return; // ป้องกันการกดซ้ำระหว่างกำลังประมวลผล
+                if (isPlayPending) return;
 
                 if (video.paused) {
                     isPlayPending = true;
+                    showLoading();
                     video.play()
                         .then(() => {
                             playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
@@ -370,6 +423,7 @@
                         })
                         .finally(() => {
                             isPlayPending = false;
+                            hideLoading();
                         });
                 } else {
                     video.pause();
@@ -380,12 +434,11 @@
             playPauseBtn.addEventListener('click', togglePlayPause);
 
             // Timeline handling
-            let isSeeking = false;
-            
-            progressBar.addEventListener('mousedown', (e) => {
+            progressContainer.addEventListener('mousedown', (e) => {
                 isSeeking = true;
-                video.pause(); // หยุดวิดีโอระหว่างการเลือกเวลา
+                video.pause();
                 updateVideoProgress(e);
+                showLoading();
             });
 
             document.addEventListener('mousemove', (e) => {
@@ -397,7 +450,7 @@
             document.addEventListener('mouseup', () => {
                 if (isSeeking) {
                     isSeeking = false;
-                    if (!video.paused) { // ถ้าวิดีโอกำลังเล่นอยู่ก่อนหน้า
+                    if (!video.paused) {
                         video.play()
                             .catch(error => {
                                 if (error.name !== 'AbortError') {
@@ -409,12 +462,20 @@
             });
 
             function updateVideoProgress(e) {
-                const rect = progressBar.getBoundingClientRect();
+                const rect = progressContainer.getBoundingClientRect();
                 const pos = (e.clientX - rect.left) / rect.width;
                 video.currentTime = pos * video.duration;
                 progress.style.width = `${pos * 100}%`;
                 currentTimeDisplay.textContent = formatTime(video.currentTime);
             }
+
+            // Buffer และ Loading events
+            video.addEventListener('progress', updateBuffer);
+            video.addEventListener('waiting', showLoading);
+            video.addEventListener('canplay', hideLoading);
+            video.addEventListener('playing', hideLoading);
+            video.addEventListener('seeking', showLoading);
+            video.addEventListener('seeked', hideLoading);
 
             // Update progress without seeking
             video.addEventListener('timeupdate', () => {
@@ -423,6 +484,7 @@
                     progress.style.width = `${percent}%`;
                     currentTimeDisplay.textContent = formatTime(video.currentTime);
                 }
+                updateBuffer();
             });
 
             // Volume control
