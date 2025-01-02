@@ -42,8 +42,8 @@
 
         .video-player {
             width: 100%;
-            height: 100%;
-            cursor: pointer;
+            height: auto;
+            display: block;
         }
 
         .video-controls {
@@ -150,7 +150,6 @@
         .loading-container {
             z-index: 20;
             transition: opacity 0.3s ease-in-out;
-            pointer-events: none;
         }
 
         .loading-spinner {
@@ -479,16 +478,7 @@
                 if (e.target.closest('.video-controls')) {
                     return;
                 }
-
-                if (isMobile) {
-                    if (!isControlsVisible) {
-                        showControls();
-                    } else {
-                        togglePlayPause();
-                    }
-                } else {
-                    togglePlayPause();
-                }
+                togglePlayPause();
             });
 
             // Double click เพื่อเข้า/ออก fullscreen
