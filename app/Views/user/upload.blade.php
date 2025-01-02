@@ -393,6 +393,95 @@
                     });
                 }
             });
+
+            async function uploadFiles(files) {
+                for (let i = 0; i < files.length; i++) {
+                    currentFile = files[i];
+                    await uploadFile(currentFile);
+                }
+            }
+
+            async function uploadFile(file) {
+                // รีเซ็ตสถานะการอัพโหลด
+                resetUpload();
+
+                const chunkSize = 1024 * 1024; // 1MB
+                const totalChunks = Math.ceil(file.size / chunkSize);
+                let currentChunk = 0;
+
+                while (currentChunk < totalChunks) {
+                    const start = currentChunk * chunkSize;
+                    const end = Math.min(start + chunkSize, file.size);
+                    const chunk = file.slice(start, end);
+
+                    const formData = new FormData();
+                    formData.append('file', chunk);
+                    formData.append('fileName', file.name);
+                    formData.append('chunkNumber', currentChunk + 1);
+                    formData.append('totalChunks', totalChunks);
+
+                    try {
+                        const response = await fetch('{{ route('uploadfile_api') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            },
+                            body: formData
+                        });
+
+                        const result = await response.json();
+                        if (result.status === 'error') {
+                            console.error('Failed to upload chunk:', result.message);
+                            return;
+                        }
+
+                        // อัพเดท progress bar
+                        const progressBar = document.querySelector('.progress-bar');
+                        if (progressBar) {
+                            const progress = Math.round(((currentChunk + 1) / totalChunks) * 100);
+                            progressBar.style.width = progress + '%';
+                            progressBar.textContent = progress + '%';
+                        }
+
+                        currentChunk++;
+                    } catch (error) {
+                        console.error('Error uploading chunk:', error);
+                        return;
+                    }
+                }
+
+                console.log('File uploaded successfully:', file.name);
+            }
+
+            // รีเซ็ตสถานะการอัพโหลด
+            function resetUpload() {
+                uploadInProgress = false;
+                currentChunk = 0;
+                currentFile = null;
+                // รีเซ็ต progress bar
+                const progressBar = document.querySelector('.progress-bar');
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                    progressBar.textContent = '0%';
+                }
+            }
+
+            $('#browseButton').click(() => fileInput.click());
+
+            dropzone.on('dragover', function(e) {
+                e.preventDefault();
+                $(this).addClass('border-blue-500');
+            }).on('dragleave', function() {
+                $(this).removeClass('border-blue-500');
+            }).on('drop', function(e) {
+                e.preventDefault();
+                $(this).removeClass('border-blue-500');
+                handleFiles(e.originalEvent.dataTransfer.files);
+            });
+
+            function handleFiles(files) {
+                uploadFiles(files);
+            }
         });
     </script>
 @endsection

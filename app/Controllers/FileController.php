@@ -25,7 +25,138 @@ class FileController
         $this->cleanupOldPartFiles();
     }
 
+    public function uploadChunk()
+    {
+        header("Content-type: application/json; charset=utf-8");
+        $headers = getallheaders();
+        $token = $headers['authorization'] ?? null;
+        $token = str_replace('Bearer ', '', $token);
+        $user = $this->service->verifyTokenServer($token);
+        if (!isset($user['u_id'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid token']);
+            exit();
+        }
 
+        $fileName = $_POST['fileName'];
+        $chunkIndex = $_POST['chunkIndex'];
+        $totalChunks = $_POST['totalChunks'];
+
+        $uploadDir = $this->uploadPath;
+        $tempFilePath = $uploadDir . $user['u_id'] . '_' . $fileName . '.part';
+
+        // ลบไฟล์เก่าเฉพาะตอนเริ่มอัพโหลดไฟล์ใหม่
+        if ($chunkIndex === '0') {
+            // ทำความสะอาดไฟล์ .part เก่าของผู้ใช้
+            $this->cleanupAllUserPartFiles($user['u_id']);
+            // เริ่มไฟล์ใหม่
+            if (file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
+        }
+
+        // Append chunk to the temporary file
+        $chunk = file_get_contents($_FILES['file']['tmp_name']);
+        if (file_put_contents($tempFilePath, $chunk, FILE_APPEND) === false) {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to write chunk']);
+            exit();
+        }
+
+        // If all chunks are uploaded, rename the temporary file
+        if ($chunkIndex == $totalChunks - 1) {
+            $getfilearr = explode(".", $fileName);
+            $type = end($getfilearr);
+            $uniqueFileName = uniqid();
+            $new_name = $user['u_id'] . '_' . $uniqueFileName;
+            $new_filename = $new_name . '.' . $type;
+            $finalFilePath = $uploadDir . $new_filename;
+
+            // ตรวจสอบว่าไฟล์ชั่วคราวมีอยู่จริง
+            if (!file_exists($tempFilePath)) {
+                echo json_encode(['status' => 'error', 'message' => 'Temporary file not found']);
+                exit();
+            }
+
+            // ย้ายไฟล์และตั้งค่าสิทธิ์
+            if (rename($tempFilePath, $finalFilePath)) {
+                chmod($finalFilePath, 0644); // ตั้งสิทธิ์ให้อ่านได้ทั่วไป แต่แก้ไขได้เฉพาะเจ้าของ
+                $res = $this->sql->param("INSERT INTO files (u_id, file_name, file_raw_name, file_ext) VALUES (?,?,?,?)", [$user['u_id'], $fileName, $new_name, $type]);
+
+                // สร้าง thumbnail สำหรับวิดีโอ
+                $videoTypes = ['mp4', 'mov', 'wmv', 'flv'];
+                if (in_array(strtolower($type), $videoTypes)) {
+                    try {
+                        $thumbnailPath = $uploadDir . 'thumbnails/';
+                        if (!file_exists($thumbnailPath)) {
+                            mkdir($thumbnailPath, 0755, true);
+                        }
+
+                        // ใช้ ffmpeg เพื่อสร้าง thumbnail จากวิดีโอ
+                        $thumbnailFile = $thumbnailPath . $new_name . '.png';
+                        $ffmpegCommand = "ffmpeg -i " . escapeshellarg($finalFilePath) . " -ss 00:00:02 -vframes 1 -vf scale=200:200:force_original_aspect_ratio=decrease " . escapeshellarg($thumbnailFile);
+                        exec($ffmpegCommand, $output, $returnCode);
+
+                        if ($returnCode === 0) {
+                            // อัพเดทฐานข้อมูลว่ามี thumbnail
+                            $this->sql->param("UPDATE files SET has_thumbnail = 1 WHERE file_raw_name = ?", [$new_name]);
+                        } else {
+                            error_log("Error creating video thumbnail: " . implode("\n", $output));
+                        }
+                    } catch (\Exception $e) {
+                        error_log("Error creating video thumbnail: " . $e->getMessage());
+                    }
+                }
+
+                echo json_encode(['status' => 'success', 'message' => 'File uploaded successfully', 'fileName' => $fileName]);
+                exit();
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'message' => 'Chunk uploaded successfully']);
+        exit();
+    }
+
+   
+
+ 
+
+    public function cleanupUpload()
+    {
+        header("Content-type: application/json; charset=utf-8");
+        $headers = getallheaders();
+        $token = $headers['authorization'] ?? null;
+        $token = str_replace('Bearer ', '', $token);
+        $user = $this->service->verifyTokenServer($token);
+        if (!isset($user['u_id'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid token']);
+            exit();
+        }
+
+        $fileName = $_POST['fileName'] ?? null;
+        if (!$fileName) {
+            echo json_encode(['status' => 'error', 'message' => 'Filename is required']);
+            exit();
+        }
+
+        $tempFilePath = $this->uploadPath . $user['u_id'] . '_' . $fileName . '.part';
+        if (file_exists($tempFilePath)) {
+            if (unlink($tempFilePath)) {
+                echo json_encode(['status' => 'success', 'message' => 'Upload cleaned up successfully']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to cleanup upload']);
+            }
+        } else {
+            echo json_encode(['status' => 'success', 'message' => 'No file to cleanup']);
+        }
+        exit();
+    }
+
+    private function jsonResponse($data, $statusCode = 200)
+    {
+        header("Content-type: application/json; charset=utf-8");
+        http_response_code($statusCode);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
     public function get_file_data()
     {
@@ -89,99 +220,6 @@ class FileController
             return false;
         }
     }
-
-    public function uploadChunk()
-    {
-        header("Content-type: application/json; charset=utf-8");
-        $headers = getallheaders();
-        $token = $headers['authorization'] ?? null;
-        $token = str_replace('Bearer ', '', $token);
-        $user = $this->service->verifyTokenServer($token);
-        if (!isset($user['u_id'])) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid token']);
-            exit();
-        }
-
-        $fileName = $_POST['fileName'];
-        $chunkIndex = $_POST['chunkIndex'];
-        $totalChunks = $_POST['totalChunks'];
-
-        $uploadDir = $this->uploadPath;
-        $tempFilePath = $uploadDir . $user['u_id'] . '_' . $fileName . '.part';
-
-        // ลบไฟล์เก่าเฉพาะตอนเริ่มอัพโหลดไฟล์ใหม่
-        if ($chunkIndex === '0') {
-            // ทำความสะอาดไฟล์ .part เก่าของผู้ใช้
-            $this->cleanupAllUserPartFiles($user['u_id']);
-            // เริ่มไฟล์ใหม่
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
-            }
-        }
-
-        // Append chunk to the temporary file
-        $chunk = file_get_contents($_FILES['file']['tmp_name']);
-        if (file_put_contents($tempFilePath, $chunk, FILE_APPEND) === false) {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to write chunk']);
-            exit();
-        }
-
-        // If all chunks are uploaded, rename the temporary file
-        if ($chunkIndex == $totalChunks - 1) {
-
-            $getfilearr = explode(".", $fileName);
-            $type = end($getfilearr);
-            $uniqueFileName = uniqid();
-            $new_name = $user['u_id'] . '_' . $uniqueFileName;
-            $new_filename = $new_name . '.' . $type;
-            $finalFilePath = $uploadDir . $new_filename;
-
-            // ตรวจสอบว่าไฟล์ชั่วคราวมีอยู่จริง
-            if (!file_exists($tempFilePath)) {
-                echo json_encode(['status' => 'error', 'message' => 'Temporary file not found']);
-                exit();
-            }
-
-            // ย้ายไฟล์และตั้งค่าสิทธิ์
-            if (rename($tempFilePath, $finalFilePath)) {
-                chmod($finalFilePath, 0644); // ตั้งสิทธิ์ให้อ่านได้ทั่วไป แต่แก้ไขได้เฉพาะเจ้าของ
-                $res = $this->sql->param("INSERT INTO files (u_id, file_name,file_raw_name,file_ext) VALUES (?,?,?,?)", [$user['u_id'], $fileName, $new_name, $type]);
-
-                // สร้าง thumbnail สำหรับวิดีโอ
-                $videoTypes = ['mp4', 'mov', 'wmv', 'flv'];
-                if (in_array(strtolower($type), $videoTypes)) {
-                    try {
-                        $thumbnailPath = $uploadDir . 'thumbnails/';
-                        if (!file_exists($thumbnailPath)) {
-                            mkdir($thumbnailPath, 0755, true);
-                        }
-
-                        // ใช้ ffmpeg เพื่อสร้าง thumbnail จากวิดีโอ
-                        $thumbnailFile = $thumbnailPath . $new_name . '.png';
-                        $ffmpegCommand = "ffmpeg -i " . escapeshellarg($finalFilePath) . " -ss 00:00:02 -vframes 1 -vf scale=200:200:force_original_aspect_ratio=decrease " . escapeshellarg($thumbnailFile);
-                        exec($ffmpegCommand, $output, $returnCode);
-
-                        if ($returnCode === 0) {
-                            // อัพเดทฐานข้อมูลว่ามี thumbnail
-                            $this->sql->param("UPDATE files SET has_thumbnail = 1 WHERE file_raw_name = ?", [$new_name]);
-                        } else {
-                            error_log("Error creating video thumbnail: " . implode("\n", $output));
-                        }
-                    } catch (\Exception $e) {
-                        error_log("Error creating video thumbnail: " . $e->getMessage());
-                    }
-                }
-
-                echo json_encode(['status' => 'success', 'message' => 'File uploaded successfully', 'fileName' => $fileName]);
-                exit();
-            }
-
-        }
-
-        echo json_encode(['status' => 'success', 'message' => 'Chunk uploaded successfully']);
-        exit();
-    }
-
 
     public function upload()
     {
@@ -349,48 +387,6 @@ class FileController
         }
 
         fclose($file);
-        exit;
-    }
-
-    /**
-     * ลบไฟล์ .part เมื่อการอัพโหลดถูกยกเลิกหรือเน็ตหลุด
-     */
-    public function cleanupUpload()
-    {
-        header("Content-type: application/json; charset=utf-8");
-        $headers = getallheaders();
-        $token = $headers['authorization'] ?? null;
-        $token = str_replace('Bearer ', '', $token);
-        $user = $this->service->verifyTokenServer($token);
-        if (!isset($user['u_id'])) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid token']);
-            exit();
-        }
-
-        $fileName = $_POST['fileName'] ?? null;
-        if (!$fileName) {
-            echo json_encode(['status' => 'error', 'message' => 'Filename is required']);
-            exit();
-        }
-
-        $tempFilePath = $this->uploadPath . $user['u_id'] . '_' . $fileName . '.part';
-        if (file_exists($tempFilePath)) {
-            if (unlink($tempFilePath)) {
-                echo json_encode(['status' => 'success', 'message' => 'Upload cleaned up successfully']);
-            } else {
-                echo json_encode(['status' => 'error', 'message' => 'Failed to cleanup upload']);
-            }
-        } else {
-            echo json_encode(['status' => 'success', 'message' => 'No file to cleanup']);
-        }
-        exit();
-    }
-
-    private function jsonResponse($data, $statusCode = 200)
-    {
-        header("Content-type: application/json; charset=utf-8");
-        http_response_code($statusCode);
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
         exit;
     }
 

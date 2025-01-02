@@ -193,7 +193,7 @@
 
                                 </div>
                                 <video class="video-player"
-                                    @if ($file->has_thumbnail) poster="{{ URL() }}/thumnail/{{ $fileName }}" @endif
+                                    @if ($file->has_thumbnail==1) poster="{{ URL() }}/thumnail/{{ $fileName }}" @endif
                                     src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}"
                                     preload="metadata">
                                     Your browser does not support the video tag.
