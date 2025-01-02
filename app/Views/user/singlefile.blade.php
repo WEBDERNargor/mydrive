@@ -343,15 +343,30 @@
             }
 
             // Event Listeners
-            playPauseBtn.addEventListener('click', () => {
+            function togglePlayPause() {
                 if (video.paused) {
-                    video.play();
-                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    startControlsTimer();
+                    video.play().catch(error => {
+                        console.log("Video play failed:", error);
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    });
                 } else {
                     video.pause();
-                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                 }
+            }
+
+            // เพิ่ม click event สำหรับวิดีโอ
+            video.addEventListener('click', togglePlayPause);
+
+            // ปรับปรุง click event สำหรับปุ่มเล่น/หยุด
+            playPauseBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // ป้องกันการ trigger click event ของวิดีโอ
+                togglePlayPause();
+            });
+
+            // เพิ่ม error handling
+            video.addEventListener('error', (e) => {
+                console.log("Video error:", e);
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
             });
 
             video.addEventListener('loadedmetadata', () => {
