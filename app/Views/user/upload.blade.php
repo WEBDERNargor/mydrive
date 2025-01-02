@@ -155,7 +155,7 @@
                         return;
                     }
                     selectedFiles.push(file); // Add valid file to array
-                    
+
                     // แสดงขนาดไฟล์ในรูปแบบที่อ่านง่าย
                     const fileSize = formatFileSize(file.size);
                     const preview = $(`
@@ -175,12 +175,12 @@
                         </div>
                     </div>
                     `);
-                    
+
                     preview.find('button').click(function() {
                         let filename = preview.data('filename');
                         selectedFiles = selectedFiles.filter(f => f.name !== filename);
                         preview.remove();
-                        
+
                         const dt = new DataTransfer();
                         selectedFiles.forEach(file => {
                             dt.items.add(file);
@@ -271,9 +271,10 @@
                             xhr.upload.addEventListener('progress', function(e) {
                                 if (e.lengthComputable) {
                                     let percentComplete = (start + e.loaded) / file.size * 100;
-                                    $(`#fileList > div[data-filename='${file.name}'] .progress-bar`).css(
-                                        'width', percentComplete + '%').attr(
-                                        'aria-valuenow', percentComplete);
+                                    $(`#fileList > div[data-filename='${file.name}'] .progress-bar`)
+                                        .css(
+                                            'width', percentComplete + '%').attr(
+                                            'aria-valuenow', percentComplete);
                                 }
                             }, false);
 
@@ -331,7 +332,9 @@
                         error: function(jqXHR, textStatus, errorThrown) {
                             console.error('Upload failed:', textStatus, errorThrown);
                             if (!isOnline) {
-                                errorMessages.html('<p class="text-red-500">Internet connection lost. Upload paused.</p>');
+                                errorMessages.html(
+                                    '<p class="text-red-500">Internet connection lost. Upload paused.</p>'
+                                    );
                                 return;
                             }
                             // เรียกใช้ฟังก์ชันทำความสะอาดเมื่อเกิดข้อผิดพลาด
@@ -354,7 +357,9 @@
                 $.ajax({
                     url: '/api/cleanup-upload',
                     type: 'POST',
-                    data: { fileName: fileName },
+                    data: {
+                        fileName: fileName
+                    },
                     headers: {
                         'Authorization': 'Bearer ' + token
                     },

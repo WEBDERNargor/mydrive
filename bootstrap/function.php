@@ -1,10 +1,12 @@
 <?php
-function pre_r($data){
+function pre_r($data)
+{
     echo "<pre>";
     print_r($data);
     echo "</pre>";
 }
-function loadEnv($path) {
+function loadEnv($path)
+{
     if (!file_exists($path)) {
         throw new Exception('.env file not found');
     }
@@ -74,35 +76,38 @@ function redirect($url)
 function route($name, $params = [])
 {
     global $routerlist;
-    
+
     foreach ($routerlist as $route) {
         if ($route['name'] === $name) {
             $url = $route['url'];
-            
+
             // แทนที่พารามิเตอร์ในURL (ถ้ามี)
             foreach ($params as $key => $value) {
                 $url = str_replace(":$key", $value, $url);
             }
-            
+
             return $url;
         }
     }
-    
+
     throw new Exception("Route with name '$name' not found.");
 }
 // ฟังก์ชันสำหรับตั้งค่าคุกกี้
-function setCookieValue($name, $value, $days) {
+function setCookieValue($name, $value, $days)
+{
     $expires = time() + ($days * 86400); // 86400 วินาทีในหนึ่งวัน
     setcookie($name, $value, $expires, "/"); // path = "/" หมายถึงคุกกี้สามารถเข้าถึงได้ทั่วทั้งเว็บไซต์
 }
 
 // ฟังก์ชันสำหรับอ่านค่าคุกกี้
-function getCookieValue($name) {
+function getCookieValue($name)
+{
     return isset($_COOKIE[$name]) ? $_COOKIE[$name] : null;
 }
 
 // ฟังก์ชันสำหรับลบคุกกี้
-function deleteCookie($name) {
+function deleteCookie($name)
+{
     setcookie($name, "", time() - 3600, "/"); // ตั้งเวลาหมดอายุให้ย้อนหลังไปหนึ่งชั่วโมง
 }
 
@@ -114,15 +119,16 @@ function jsonResponse($data, $statusCode = 200)
     exit;
 }
 
-function fillterpermission($permission){
-    if($permission<=100 ){
-          return "user";
-    }elseif($permission>100 and $permission<=500){
-         return "employee";
-    }elseif($permission>500 and $permission<=9999){
-     return "admin";
-    }else{
-     return "user";
+function fillterpermission($permission)
+{
+    if ($permission <= 100) {
+        return "user";
+    } elseif ($permission > 100 and $permission <= 500) {
+        return "employee";
+    } elseif ($permission > 500 and $permission <= 9999) {
+        return "admin";
+    } else {
+        return "user";
     }
-    
- }
+
+}

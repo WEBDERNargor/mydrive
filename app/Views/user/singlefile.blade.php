@@ -161,7 +161,8 @@
                                     <i class="fa-solid fa-pause text-lg text-white"></i>
 
                                 </div>
-                                <video class="video-player" @if($file->has_thumbnail) poster="{{ URL() }}/thumnail/{{$fileName}}" @endif
+                                <video class="video-player"
+                                    @if ($file->has_thumbnail) poster="{{ URL() }}/thumnail/{{ $fileName }}" @endif
                                     src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}"
                                     preload="metadata">
                                     Your browser does not support the video tag.
@@ -195,7 +196,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                   
+
                                 </div>
                             </div>
                         @elseif($isArchive)
@@ -493,5 +494,4 @@
             alert('Share URL copied to clipboard!');
         }
     </script>
-   
 @endsection

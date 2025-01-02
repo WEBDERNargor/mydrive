@@ -5,3 +5,4 @@ addRoute('post', '/api/register', 'register_api', 'App\Controllers\ServiceContro
 addRoute('post', '/api/upload', 'upload_api', 'App\Controllers\FileController@upload');
 addRoute('post', '/api/upload-chunk', 'uploadchunk_api', 'App\Controllers\FileController@uploadChunk');
 addRoute('post', '/api/getfiles', 'getallfile_api', 'App\Controllers\FileController@get_file_data');
+addRoute('post', '/api/getfiles', 'change_password_api', 'App\Controllers\ServiceController@change_password');

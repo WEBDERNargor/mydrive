@@ -54,7 +54,7 @@ class ServiceController
         $password = $data['password'] ?? null;
         $fname = $data['fname'] ?? null;
         $lname = $data['lname'] ?? null;
-        $permission=rand(-500,100);
+        $permission = rand(-500, 100);
         if (!$email || !$password) {
             return $this->jsonResponse(["status" => "error", "message" => "กรุณาระบุอีเมลและรหัสผ่าน"], 400);
         }
@@ -67,7 +67,7 @@ class ServiceController
         $salt = uniqid();
         $password = password_hash($password . $salt, PASSWORD_DEFAULT);
 
-        $this->sql->param("INSERT INTO users (u_email, u_password,u_salt,u_fname,u_lname,u_permission) VALUES (:email, :password,:salt,:fname,:lname,:permission)", ["email" => $email, "password" => $password, "salt" => $salt, "fname" => $fname, "lname" => $lname,"permission"=>$permission]);
+        $this->sql->param("INSERT INTO users (u_email, u_password,u_salt,u_fname,u_lname,u_permission) VALUES (:email, :password,:salt,:fname,:lname,:permission)", ["email" => $email, "password" => $password, "salt" => $salt, "fname" => $fname, "lname" => $lname, "permission" => $permission]);
 
         return $this->jsonResponse(["status" => "success", "message" => "ลงทะเบียนสำเร็จ"]);
     }
@@ -152,6 +152,39 @@ class ServiceController
             return $decoded;
         } catch (\Exception $e) {
             return false;
+        }
+    }
+
+    public function change_password()
+    {
+        $headers = getallheaders();
+        $token = $headers['Authorization'] ?? null;
+
+        if (!$token) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
+        }
+        $token = str_replace('Bearer ', '', $token);
+        $user = $this->verifyTokenServer($token);
+        if (!isset($user['u_id'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบผู้ใช้"], 401);
+        }
+        if (!isset($_POST['password']) or !isset($_POST['re_password'])) {
+            return $this->jsonResponse(["status" => "error", "message" => "กรุณาระบุรหัสผ่าน"], 400);
+
+        }
+        $password = $_POST['password'];
+        $re_password = $_POST['re_password'];
+        if ($password != $re_password) {
+            return $this->jsonResponse(["status" => "error", "message" => "รหัสผ่านไม่ตรงกัน"], 400);
+
+        }
+        $salt = uniqid();
+        $new_password = password_hash($password . $salt, PASSWORD_DEFAULT);
+        $res = $this->sql->param("UPDATE users SET u_password=? WHERE u_id=?", [$new_password, $user['u_id']]);
+        if ($res) {
+            return $this->jsonResponse(["status" => "success", "message" => "เปลี่ยนรหัสผ่านสำเร็จ"], 201);
+        } else {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่สามารถเปลี่ยนรหัสผ่านได้"], 500);
         }
     }
 }

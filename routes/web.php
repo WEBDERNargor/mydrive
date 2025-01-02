@@ -22,8 +22,8 @@ addRoute('get', '/file/{filename}/{filetype}', 'getFile', 'App\Controllers\FileC
 addRoute('get', '/stream/{filename}/{filetype}', 'streamVideo', 'App\Controllers\FileController@streamVideo');
 addRoute('get', '/thumnail/{filename}', 'thumnailVideo', 'App\Controllers\FileController@getThumnail');
 
-addRouteMiddleware('get','/login','App\Middlewares\LoginMiddleware@checkalreadylogin');
-addRouteMiddleware('get','/register','App\Middlewares\LoginMiddleware@checkalreadylogin');
-addRouteMiddleware('get','/upload','App\Middlewares\LoginMiddleware@handle');
-addRouteMiddleware('get','/myfile','App\Middlewares\LoginMiddleware@handle');
-addRouteMiddleware('get','/profile','App\Middlewares\LoginMiddleware@handle');
+addRouteMiddleware('get', '/login', 'App\Middlewares\LoginMiddleware@checkalreadylogin');
+addRouteMiddleware('get', '/register', 'App\Middlewares\LoginMiddleware@checkalreadylogin');
+addRouteMiddleware('get', '/upload', 'App\Middlewares\LoginMiddleware@handle');
+addRouteMiddleware('get', '/myfile', 'App\Middlewares\LoginMiddleware@handle');
+addRouteMiddleware('get', '/profile', 'App\Middlewares\LoginMiddleware@handle');

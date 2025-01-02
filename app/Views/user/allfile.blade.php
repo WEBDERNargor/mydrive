@@ -8,31 +8,27 @@
     <title>{{ NAME() }}</title>
 @endsection
 @section('content')
-<div class="max-w-4xl mx-auto  p-4 bg-white rounded-lg shadow-lg  mt-[80px]">
-    
-    <div id="list_file" class="grid grid-cols-1  gap-4">
-   
-        <div class="text-center text-2xl font-semibold">Loading data...</div>
-   
+    <div class="max-w-4xl mx-auto  p-4 bg-white rounded-lg shadow-lg  mt-[80px]">
+
+        <div id="list_file" class="grid grid-cols-1  gap-4">
+
+            <div class="text-center text-2xl font-semibold">Loading data...</div>
+
+        </div>
+
     </div>
-
-</div>
-
-
-
-
 @endsection
 @section('scripts')
     <script>
-        var url="{{URL()}}";
-       var token = getCookie('login_token');
-       var data=[];
+        var url = "{{ URL() }}";
+        var token = getCookie('login_token');
+        var data = [];
         $(document).ready(function() {
-           
-          
+
+
             get_data();
             renderui();
-      
+
             setInterval(() => {
                 get_data();
             }, 15000);
@@ -46,12 +42,12 @@
                     'Authorization': 'Bearer ' + token
                 },
                 success: function(response) {
-                   if(response.status=='success'){
-                    if(!areArraysEqual(data,response.data)){
-                        data=response.data;
-                       renderui();
+                    if (response.status == 'success') {
+                        if (!areArraysEqual(data, response.data)) {
+                            data = response.data;
+                            renderui();
+                        }
                     }
-                   }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     alert("Error");
@@ -61,11 +57,11 @@
         }
 
 
-function renderui(){
-    let html=``;
-    if(data.length>0){
-    for(let index in data){
-        html+=`
+        function renderui() {
+            let html = ``;
+            if (data.length > 0) {
+                for (let index in data) {
+                    html += `
          <div class="flex items-center justify-between p-4 border rounded-lg shadow-sm">
             <div class="flex items-center">
                 
@@ -77,28 +73,24 @@ function renderui(){
             </div>
         </div>
         `;
-    }
-}else{
-html=`<div class="text-center text-2xl font-semibold">No Data Found</div>`;
-}
-    $("#list_file").html(html);
-}
-// <img src="${}" alt="" class="w-16 h-16 object-cover rounded-lg">
+                }
+            } else {
+                html = `<div class="text-center text-2xl font-semibold">No Data Found</div>`;
+            }
+            $("#list_file").html(html);
+        }
+        // <img src="${}" alt="" class="w-16 h-16 object-cover rounded-lg">
 
-function areArraysEqual(arr1, arr2) {
-  if (arr1.length !== arr2.length) return false;
+        function areArraysEqual(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
 
-  for (let i = 0; i < arr1.length; i++) {
-    if (arr1[i].name !== arr2[i].name || arr1[i].price !== arr2[i].price) {
-      return false;
-    }
-  }
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i].name !== arr2[i].name || arr1[i].price !== arr2[i].price) {
+                    return false;
+                }
+            }
 
-  return true;
-}
-
-
-
-
+            return true;
+        }
     </script>
 @endsection

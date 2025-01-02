@@ -14,7 +14,7 @@ class FileController
     public function __construct()
     {
         global $app;
-        $this->uploadPath =  __DIR__.'/../../storage/uploads/';
+        $this->uploadPath = __DIR__ . '/../../storage/uploads/';
         $this->service = new ServiceController();
         $this->sql = new Custom($app->db);
         // Create uploads directory if it doesn't exist
@@ -27,21 +27,22 @@ class FileController
 
 
 
-    public function get_file_data(){
+    public function get_file_data()
+    {
         $headers = getallheaders();
         $token = $headers['Authorization'] ?? null;
         if (!$token) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
         }
         $token = str_replace('Bearer ', '', $token);
-        $user=$this->service->verifyTokenServer($token);
-        if(!isset($user['u_id'])){
+        $user = $this->service->verifyTokenServer($token);
+        if (!isset($user['u_id'])) {
             return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ"], 401);
 
         }
-        $res=$this->sql->param("SELECT * FROM files WHERE u_id=?",[$user['u_id']]);
-        $fetch=$res->fetchAll(PDO::FETCH_ASSOC);
-        return $this->jsonResponse(["status" => "success", "message" => "load data successfully","data"=>$fetch], 201);
+        $res = $this->sql->param("SELECT * FROM files WHERE u_id=?", [$user['u_id']]);
+        $fetch = $res->fetchAll(PDO::FETCH_ASSOC);
+        return $this->jsonResponse(["status" => "success", "message" => "load data successfully", "data" => $fetch], 201);
     }
 
 
@@ -128,11 +129,11 @@ class FileController
         // If all chunks are uploaded, rename the temporary file
         if ($chunkIndex == $totalChunks - 1) {
 
-            $getfilearr=explode(".", $fileName);
-            $type=end($getfilearr);
+            $getfilearr = explode(".", $fileName);
+            $type = end($getfilearr);
             $uniqueFileName = uniqid();
-            $new_name=$user['u_id'] . '_' . $uniqueFileName;
-            $new_filename=$new_name.'.'.$type;
+            $new_name = $user['u_id'] . '_' . $uniqueFileName;
+            $new_filename = $new_name . '.' . $type;
             $finalFilePath = $uploadDir . $new_filename;
 
             // ตรวจสอบว่าไฟล์ชั่วคราวมีอยู่จริง
@@ -144,7 +145,7 @@ class FileController
             // ย้ายไฟล์และตั้งค่าสิทธิ์
             if (rename($tempFilePath, $finalFilePath)) {
                 chmod($finalFilePath, 0644); // ตั้งสิทธิ์ให้อ่านได้ทั่วไป แต่แก้ไขได้เฉพาะเจ้าของ
-                $res=$this->sql->param("INSERT INTO files (u_id, file_name,file_raw_name,file_ext) VALUES (?,?,?,?)",[$user['u_id'],$fileName,$new_name,$type]);
+                $res = $this->sql->param("INSERT INTO files (u_id, file_name,file_raw_name,file_ext) VALUES (?,?,?,?)", [$user['u_id'], $fileName, $new_name, $type]);
 
                 // สร้าง thumbnail สำหรับวิดีโอ
                 $videoTypes = ['mp4', 'mov', 'wmv', 'flv'];
@@ -201,7 +202,7 @@ class FileController
             if ($file['error'] === UPLOAD_ERR_OK) {
                 $uniqueName = uniqid() . '_' . basename($file['name']);
                 $targetPath = $this->uploadPath . $uniqueName;
-                
+
                 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
                     $response['files'][] = [
                         'originalName' => $file['name'],
@@ -225,7 +226,7 @@ class FileController
         }
 
         return json_encode($response);
-     
+
     }
 
     private function reArrayFiles($files)
@@ -243,10 +244,10 @@ class FileController
         return $fileArray;
     }
 
-    public function getFile($filename,$filetype)
+    public function getFile($filename, $filetype)
     {
-        $filePath = $this->uploadPath . $filename.".".$filetype;
-        
+        $filePath = $this->uploadPath . $filename . "." . $filetype;
+
         if (!file_exists($filePath)) {
             header("HTTP/1.0 404 Not Found");
             exit('File not found');
@@ -263,15 +264,15 @@ class FileController
         header("Content-Type: " . $mimeType);
         header("Content-Disposition: inline; filename=\"" . basename($filename) . "\"");
         header("Content-Length: " . filesize($filePath));
-        
+
         readfile($filePath);
         exit;
     }
 
     public function getThumnail($filename)
     {
-        $filePath = $this->uploadPath."thumbnails/". $filename.".png";
-        
+        $filePath = $this->uploadPath . "thumbnails/" . $filename . ".png";
+
         if (!file_exists($filePath)) {
             header("HTTP/1.0 404 Not Found");
             exit('File not found');
@@ -288,7 +289,7 @@ class FileController
         header("Content-Type: " . $mimeType);
         header("Content-Disposition: inline; filename=\"" . basename($filename) . "\"");
         header("Content-Length: " . filesize($filePath));
-        
+
         readfile($filePath);
         exit;
     }
@@ -296,7 +297,7 @@ class FileController
     public function streamVideo($filename, $filetype)
     {
         $filePath = $this->uploadPath . $filename . "." . $filetype;
-        
+
         if (!file_exists($filePath)) {
             header("HTTP/1.0 404 Not Found");
             exit;
@@ -310,7 +311,7 @@ class FileController
             // Extract the range header
             preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches);
             $offset = intval($matches[1]);
-            
+
             if (isset($matches[2])) {
                 $length = intval($matches[2]) - $offset + 1;
             } else {
@@ -328,17 +329,17 @@ class FileController
         header('Content-Length: ' . $length);
         header('Accept-Ranges: bytes');
         header('Cache-Control: no-cache, no-store, must-revalidate');
-        
+
         // Open file for reading
         $file = fopen($filePath, 'rb');
-        
+
         // Seek to the requested offset
         fseek($file, $offset);
-        
+
         // Stream the video in chunks
         $chunkSize = 8192; // 8KB chunks
         $bytesRemaining = $length;
-        
+
         while ($bytesRemaining > 0 && !feof($file)) {
             $bytesToRead = min($chunkSize, $bytesRemaining);
             $data = fread($file, $bytesToRead);
@@ -346,7 +347,7 @@ class FileController
             flush();
             $bytesRemaining -= strlen($data);
         }
-        
+
         fclose($file);
         exit;
     }
