@@ -36,8 +36,8 @@
             position: relative;
             width: 100%;
             max-width: 100%;
-            background: #000;
-            overflow: hidden;
+            background: black;
+            aspect-ratio: 16/9;
         }
 
         .video-player {
@@ -142,12 +142,16 @@
             transition: width 0.1s ease-in-out;
         }
 
+        .loading-container {
+            z-index: 20;
+            transition: opacity 0.3s ease-in-out;
+        }
+
         .loading-spinner {
-            z-index: 10;
+            animation: pulse 2s infinite;
         }
 
         .loading-spinner i {
-            font-size: 24px;
             animation: spin 1s linear infinite;
         }
 
@@ -157,6 +161,18 @@
             }
             to {
                 transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.6;
             }
         }
 
@@ -201,29 +217,20 @@
                                 alt="{{ $file->file_name }}" class="max-w-full h-auto rounded">
                         @elseif($isVideo)
                             <div class="video-container">
-                                <div id="playeff"
-                                    class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 px-4 py-2 rounded-full bg-black bg-opacity-50 cursor-pointer hidden">
-
-                                    <i class="fa-solid fa-play text-lg text-white"></i>
-
-
-                                </div>
-                                <div id="stopeff"
-                                    class="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 px-4 py-2 rounded-full bg-black bg-opacity-50 cursor-pointer hidden">
-
-
-                                    <i class="fa-solid fa-pause text-lg text-white"></i>
-
-                                </div>
-                                <video class="video-player"
+                                <video class="video-player w-full h-full" playsinline
                                     @if ($file->has_thumbnail==1) poster="{{ URL() }}/thumnail/{{ $fileName }}" @endif
                                     src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}"
                                     preload="auto"
-                                    playsinline
                                     controlsList="nodownload"
                                     loading="lazy">
                                     Your browser does not support the video tag.
                                 </video>
+                                <!-- Loading indicator แยกออกมาจาก controls -->
+                                <div class="loading-container absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 hidden">
+                                    <div class="loading-spinner text-white">
+                                        <i class="fas fa-spinner fa-3x"></i>
+                                    </div>
+                                </div>
                                 <div class="video-controls">
                                     <div class="progress-container relative w-full h-4 bg-gray-200 rounded cursor-pointer">
                                         <!-- Buffer bar -->
@@ -331,6 +338,7 @@
             const currentTimeDisplay = container.querySelector('.current-time');
             const durationDisplay = container.querySelector('.duration');
             const fullscreenBtn = container.querySelector('.fullscreen');
+            const loadingContainer = container.querySelector('.loading-container');
 
             let controlsTimeout;
             let isControlsVisible = true;
@@ -347,10 +355,12 @@
             // แสดง/ซ่อน loading spinner
             function showLoading() {
                 loadingSpinner.classList.remove('hidden');
+                loadingContainer.classList.remove('hidden');
             }
 
             function hideLoading() {
                 loadingSpinner.classList.add('hidden');
+                loadingContainer.classList.add('hidden');
             }
 
             // อัพเดท buffer bar
@@ -399,6 +409,26 @@
                 // วิดีโอพร้อมเล่นแล้ว
                 playPauseBtn.disabled = false;
             });
+
+            // แสดง loading ทันทีที่เริ่มโหลดวิดีโอ
+            showLoading();
+
+            video.addEventListener('loadstart', showLoading);
+            video.addEventListener('waiting', showLoading);
+            video.addEventListener('seeking', showLoading);
+            video.addEventListener('stalled', showLoading);
+
+            video.addEventListener('canplay', hideLoading);
+            video.addEventListener('playing', hideLoading);
+            video.addEventListener('seeked', hideLoading);
+            video.addEventListener('error', hideLoading);
+
+            // เพิ่มการตรวจสอบสถานะการโหลดเริ่มต้น
+            if (video.readyState >= 3) { // HAVE_FUTURE_DATA
+                hideLoading();
+            } else {
+                showLoading();
+            }
 
             // Event Listeners
             let isPlayPending = false;
@@ -473,13 +503,6 @@
 
             // Buffer และ Loading events
             video.addEventListener('progress', updateBuffer);
-            video.addEventListener('waiting', showLoading);
-            video.addEventListener('canplay', hideLoading);
-            video.addEventListener('playing', hideLoading);
-            video.addEventListener('seeking', showLoading);
-            video.addEventListener('seeked', hideLoading);
-
-            // Update progress without seeking
             video.addEventListener('timeupdate', () => {
                 if (!isSeeking) {
                     const percent = (video.currentTime / video.duration) * 100;
