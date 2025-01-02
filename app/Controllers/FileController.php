@@ -223,21 +223,54 @@ class FileController
 
     public function upload()
     {
-
-        // pre_r($_REQUEST);
-        // if(isset($_FILES)){
-        // pre_r($_FILES);
-        // }
-
         $response = ['status' => 'success', 'files' => [], 'message' => 'File uploaded successfully'];
         if (empty($_FILES['files'])) {
             return json_encode(['status' => 'error', 'message' => 'No files uploaded']);
         }
 
         $files = $this->reArrayFiles($_FILES['files']);
+        $maxFileSize = 100 * 1024 * 1024; // 100MB limit
+        $allowedMimeTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/plain',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'video/mp4',
+            'video/quicktime',
+            'video/x-ms-wmv',
+            'video/x-flv',
+            'application/zip',
+            'application/x-rar-compressed'
+        ];
 
         foreach ($files as $file) {
-            if ($file['error'] === UPLOAD_ERR_OK) {
+            try {
+                // Check for upload errors first
+                if ($file['error'] !== UPLOAD_ERR_OK) {
+                    $errorMessage = $this->getUploadErrorMessage($file['error']);
+                    throw new \Exception($errorMessage);
+                }
+
+                // Validate file size
+                if ($file['size'] > $maxFileSize) {
+                    throw new \Exception("File {$file['name']} is too large. Maximum size is 100MB");
+                }
+
+                // Validate file type
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($file['tmp_name']);
+                if (!in_array($mimeType, $allowedMimeTypes)) {
+                    throw new \Exception("File type {$mimeType} is not allowed for {$file['name']}");
+                }
+
+                // Check if file is corrupted
+                if (!$this->isFileValid($file['tmp_name'], $mimeType)) {
+                    throw new \Exception("File {$file['name']} appears to be corrupted");
+                }
+
                 $uniqueName = uniqid() . '_' . basename($file['name']);
                 $targetPath = $this->uploadPath . $uniqueName;
 
@@ -250,21 +283,93 @@ class FileController
                         'url' => '/file/' . $uniqueName
                     ];
                 } else {
-                    $response['status'] = 'error';
-                    $response['message'] = 'Failed to upload some files';
+                    throw new \Exception("Failed to move uploaded file {$file['name']}");
                 }
-            } else {
+            } catch (\Exception $e) {
+                error_log("Upload error for file {$file['name']}: " . $e->getMessage());
+                $response['errors'][] = [
+                    'file' => $file['name'],
+                    'error' => $e->getMessage()
+                ];
                 $response['status'] = 'error';
-                $response['message'] = 'Some files had upload errors';
+                $response['message'] = 'Some files failed to upload';
             }
         }
 
-        if (empty($response['message'])) {
+        if ($response['status'] === 'success') {
             $response['message'] = count($response['files']) . ' files uploaded successfully';
+        } else if (empty($response['files'])) {
+            $response['message'] = 'All files failed to upload';
+        } else {
+            $response['message'] = 'Some files uploaded successfully, but ' . count($response['errors']) . ' failed';
         }
 
         return json_encode($response);
+    }
 
+    private function getUploadErrorMessage($errorCode) {
+        switch ($errorCode) {
+            case UPLOAD_ERR_INI_SIZE:
+                return 'The uploaded file exceeds the upload_max_filesize directive in php.ini';
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'The uploaded file exceeds the MAX_FILE_SIZE directive in the HTML form';
+            case UPLOAD_ERR_PARTIAL:
+                return 'The uploaded file was only partially uploaded';
+            case UPLOAD_ERR_NO_FILE:
+                return 'No file was uploaded';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'Missing a temporary folder';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Failed to write file to disk';
+            case UPLOAD_ERR_EXTENSION:
+                return 'File upload stopped by extension';
+            default:
+                return 'Unknown upload error';
+        }
+    }
+
+    private function isFileValid($filePath, $mimeType) {
+        try {
+            // Basic file integrity check
+            if (!is_readable($filePath) || filesize($filePath) === 0) {
+                return false;
+            }
+
+            // Additional checks based on file type
+            if (strpos($mimeType, 'image/') === 0) {
+                // Verify image files
+                $imageInfo = @getimagesize($filePath);
+                return $imageInfo !== false;
+            } else if (strpos($mimeType, 'video/') === 0) {
+                // Basic video file check (just check if we can open it)
+                $handle = @fopen($filePath, 'rb');
+                if ($handle === false) {
+                    return false;
+                }
+                fclose($handle);
+                return true;
+            } else if ($mimeType === 'application/pdf') {
+                // Basic PDF validation
+                $handle = @fopen($filePath, 'rb');
+                if ($handle === false) {
+                    return false;
+                }
+                $line = fgets($handle);
+                fclose($handle);
+                return strpos($line, '%PDF-') === 0;
+            }
+
+            // For other file types, just check if we can open them
+            $handle = @fopen($filePath, 'rb');
+            if ($handle === false) {
+                return false;
+            }
+            fclose($handle);
+            return true;
+        } catch (\Exception $e) {
+            error_log("File validation error: " . $e->getMessage());
+            return false;
+        }
     }
 
     private function reArrayFiles($files)
