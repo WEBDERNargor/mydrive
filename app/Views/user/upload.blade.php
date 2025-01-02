@@ -236,131 +236,121 @@
                 $('.cancel-btn').addClass('hidden');
                 $('.progress-container').removeClass('hidden');
 
-                // ซ่อนปุ่มยกเลิกและแสดง progress bar
-                selectedFiles.forEach((file, index) => {
-                    uploadFileInChunks(file, index);
-                });
+                // เปลี่ยนเป็นอัพโหลดทีละไฟล์
+                uploadNextFile(0);
             });
 
-            function uploadFileInChunks(file, index) {
-                if (!isOnline) {
+            function uploadNextFile(index) {
+                if (index >= selectedFiles.length) {
+                    // อัพโหลดทุกไฟล์เสร็จแล้ว
+                    Swal.fire({
+                        title: 'Upload Complete',
+                        text: 'All files have been uploaded successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        timer: 5000,
+                        timerProgressBar: true,
+                    }).then((e) => {
+                        window.location.reload();
+                    });
                     return;
                 }
-                let start = 0;
-                let end = chunkSize;
-                let chunkIndex = 0;
 
-                function uploadNextChunk() {
+                uploadFileInChunks(selectedFiles[index], index).then(() => {
+                    // เมื่ออัพโหลดไฟล์ปัจจุบันเสร็จ ให้ไปอัพโหลดไฟล์ถัดไป
+                    uploadNextFile(index + 1);
+                }).catch((error) => {
+                    console.error('Error uploading file:', error);
+                    // แสดง error และไปอัพโหลดไฟล์ถัดไป
+                    uploadNextFile(index + 1);
+                });
+            }
 
-                    const chunk = file.slice(start, end);
-                    const formData = new FormData();
-                    formData.append('file', chunk);
-                    formData.append('fileName', file.name);
-                    formData.append('chunkIndex', chunkIndex);
-                    formData.append('totalChunks', Math.ceil(file.size / chunkSize));
+            function uploadFileInChunks(file, index) {
+                return new Promise((resolve, reject) => {
+                    if (!isOnline) {
+                        reject(new Error('No internet connection'));
+                        return;
+                    }
+                    let start = 0;
+                    let end = chunkSize;
+                    let chunkIndex = 0;
 
-                    $.ajax({
-                        url: '/api/upload-chunk',
-                        type: 'POST',
-                        data: formData,
-                        dataType: 'json',
-                        processData: false,
-                        contentType: false,
-                        headers: {
-                            'authorization': 'Bearer ' + token
-                        },
-                        xhr: function() {
-                            let xhr = new window.XMLHttpRequest();
-                            xhr.upload.addEventListener('progress', function(e) {
-                                if (e.lengthComputable) {
-                                    let percentComplete = (start + e.loaded) / file.size * 100;
-                                    $(`#fileList > div[data-filename='${file.name}'] .progress-bar`)
-                                        .css(
-                                            'width', percentComplete + '%').attr(
-                                            'aria-valuenow', percentComplete);
+                    function uploadNextChunk() {
+                        const chunk = file.slice(start, end);
+                        const formData = new FormData();
+                        formData.append('file', chunk);
+                        formData.append('fileName', file.name);
+                        formData.append('chunkIndex', chunkIndex);
+                        formData.append('totalChunks', Math.ceil(file.size / chunkSize));
+
+                        $.ajax({
+                            url: '/api/upload-chunk',
+                            type: 'POST',
+                            data: formData,
+                            dataType: 'json',
+                            processData: false,
+                            contentType: false,
+                            headers: {
+                                'authorization': 'Bearer ' + token
+                            },
+                            xhr: function() {
+                                let xhr = new window.XMLHttpRequest();
+                                xhr.upload.addEventListener('progress', function(e) {
+                                    if (e.lengthComputable) {
+                                        let percentComplete = (start + e.loaded) / file.size * 100;
+                                        $(`#fileList > div[data-filename='${file.name}'] .progress-bar`)
+                                            .css('width', percentComplete + '%')
+                                            .attr('aria-valuenow', percentComplete);
+                                    }
+                                }, false);
+
+                                xhr.addEventListener('abort', function() {
+                                    cleanupFailedUpload(file.name);
+                                    reject(new Error('Upload aborted'));
+                                });
+
+                                return xhr;
+                            },
+                            success: function(response) {
+                                try {
+                                    if (typeof response !== 'object') {
+                                        response = JSON.parse(response);
+                                    }
+                                } catch (e) {
+                                    reject(new Error('Invalid server response'));
+                                    return;
                                 }
-                            }, false);
 
-                            // เพิ่ม event listener สำหรับการยกเลิก
-                            xhr.addEventListener('abort', function() {
+                                if (response.status === 'error') {
+                                    reject(new Error(response.message));
+                                    return;
+                                }
+
+                                if (end < file.size) {
+                                    start = end;
+                                    end = start + chunkSize;
+                                    chunkIndex++;
+                                    uploadNextChunk();
+                                } else {
+                                    filesUploaded++;
+                                    resolve();
+                                }
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.error('Upload failed:', textStatus, errorThrown);
+                                if (!isOnline) {
+                                    reject(new Error('Internet connection lost'));
+                                    return;
+                                }
                                 cleanupFailedUpload(file.name);
-                            });
-
-                            return xhr;
-                        },
-                        success: function(response) {
-                            try {
-                                if (typeof response !== 'object') {
-                                    response = JSON.parse(response);
-                                }
-                            } catch (e) {
-                                Swal.fire({
-                                    title: 'Upload failed',
-                                    text: 'Invalid server response',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK',
-                                    timer: 5000,
-                                    timerProgressBar: true
-                                });
-                                return;
+                                reject(new Error(`Upload failed: ${textStatus} - ${errorThrown}`));
                             }
+                        });
+                    }
 
-                            if (response.status === 'error') {
-                                Swal.fire({
-                                    title: 'Upload failed',
-                                    text: response.message,
-                                    icon: 'error',
-                                    timer: 5000,
-                                    timerProgressBar: true,
-                                    confirmButtonText: 'OK'
-                                });
-                                return;
-                            }
-
-                            if (end < file.size) {
-                                start = end;
-                                end = start + chunkSize;
-                                chunkIndex++;
-                                uploadNextChunk();
-                            } else {
-                                filesUploaded++;
-                                if (filesUploaded === selectedFiles.length) {
-                                    Swal.fire({
-                                        title: 'Upload Complete',
-                                        text: 'All files have been uploaded successfully!',
-                                        icon: 'success',
-                                        confirmButtonText: 'OK',
-                                        timer: 5000,
-                                        timerProgressBar: true,
-                                    }).then((e) => {
-                                        window.location.reload();
-                                    });
-                                }
-                            }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            console.error('Upload failed:', textStatus, errorThrown);
-                            if (!isOnline) {
-                                errorMessages.html(
-                                    '<p class="text-red-500">Internet connection lost. Upload paused.</p>'
-                                );
-                                return;
-                            }
-                            // เรียกใช้ฟังก์ชันทำความสะอาดเมื่อเกิดข้อผิดพลาด
-                            cleanupFailedUpload(file.name);
-                            Swal.fire({
-                                title: 'Upload failed',
-                                text: `An error occurred during the upload process: ${textStatus} - ${errorThrown}`,
-                                icon: 'error',
-                                confirmButtonText: 'OK',
-                                timer: 5000,
-                                timerProgressBar: true
-                            });
-                        }
-                    });
-                }
-
-                uploadNextChunk();
+                    uploadNextChunk();
+                });
             }
 
             // เพิ่มฟังก์ชันสำหรับทำความสะอาดไฟล์ที่อัพโหลดไม่สำเร็จ

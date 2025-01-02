@@ -221,90 +221,74 @@ class FileController
         }
     }
 
-    public function upload()
-    {
-        $response = ['status' => 'success', 'files' => [], 'message' => 'File uploaded successfully'];
-        if (empty($_FILES['files'])) {
-            return json_encode(['status' => 'error', 'message' => 'No files uploaded']);
+
+    private function validateVideo($filePath) {
+        try {
+            // ใช้ FFmpeg เพื่อตรวจสอบความสมบูรณ์ของวิดีโอ
+            $command = "ffmpeg -v error -i " . escapeshellarg($filePath) . " -f null - 2>&1";
+            exec($command, $output, $returnCode);
+            
+            // ถ้าไม่มี error จาก FFmpeg ถือว่าไฟล์สมบูรณ์
+            return $returnCode === 0 && empty($output);
+        } catch (\Exception $e) {
+            error_log("Video validation error: " . $e->getMessage());
+            return false;
         }
+    }
 
-        $files = $this->reArrayFiles($_FILES['files']);
-        $maxFileSize = 100 * 1024 * 1024; // 100MB limit
-        $allowedMimeTypes = [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'text/plain',
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'video/mp4',
-            'video/quicktime',
-            'video/x-ms-wmv',
-            'video/x-flv',
-            'application/zip',
-            'application/x-rar-compressed'
-        ];
-
-        foreach ($files as $file) {
-            try {
-                // Check for upload errors first
-                if ($file['error'] !== UPLOAD_ERR_OK) {
-                    $errorMessage = $this->getUploadErrorMessage($file['error']);
-                    throw new \Exception($errorMessage);
-                }
-
-                // Validate file size
-                if ($file['size'] > $maxFileSize) {
-                    throw new \Exception("File {$file['name']} is too large. Maximum size is 100MB");
-                }
-
-                // Validate file type
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->file($file['tmp_name']);
-                if (!in_array($mimeType, $allowedMimeTypes)) {
-                    throw new \Exception("File type {$mimeType} is not allowed for {$file['name']}");
-                }
-
-                // Check if file is corrupted
-                if (!$this->isFileValid($file['tmp_name'], $mimeType)) {
-                    throw new \Exception("File {$file['name']} appears to be corrupted");
-                }
-
-                $uniqueName = uniqid() . '_' . basename($file['name']);
-                $targetPath = $this->uploadPath . $uniqueName;
-
-                if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                    $response['files'][] = [
-                        'originalName' => $file['name'],
-                        'fileName' => $uniqueName,
-                        'size' => $file['size'],
-                        'type' => $file['type'],
-                        'url' => '/file/' . $uniqueName
-                    ];
-                } else {
-                    throw new \Exception("Failed to move uploaded file {$file['name']}");
-                }
-            } catch (\Exception $e) {
-                error_log("Upload error for file {$file['name']}: " . $e->getMessage());
-                $response['errors'][] = [
-                    'file' => $file['name'],
-                    'error' => $e->getMessage()
-                ];
-                $response['status'] = 'error';
-                $response['message'] = 'Some files failed to upload';
+    private function isFileValid($filePath, $mimeType) {
+        try {
+            // ตรวจสอบพื้นฐาน
+            if (!is_readable($filePath) || filesize($filePath) === 0) {
+                return false;
             }
-        }
 
-        if ($response['status'] === 'success') {
-            $response['message'] = count($response['files']) . ' files uploaded successfully';
-        } else if (empty($response['files'])) {
-            $response['message'] = 'All files failed to upload';
-        } else {
-            $response['message'] = 'Some files uploaded successfully, but ' . count($response['errors']) . ' failed';
-        }
+            // ตรวจสอบตามประเภทไฟล์
+            if (strpos($mimeType, 'image/') === 0) {
+                // ตรวจสอบไฟล์รูปภาพ
+                $imageInfo = @getimagesize($filePath);
+                return $imageInfo !== false;
+            } else if (strpos($mimeType, 'video/') === 0) {
+                // ตรวจสอบไฟล์วิดีโอ
+                $handle = @fopen($filePath, 'rb');
+                if ($handle === false) {
+                    return false;
+                }
+                // อ่านส่วนต้นของไฟล์เพื่อตรวจสอบ header
+                $header = fread($handle, 4096);
+                fclose($handle);
+                return !empty($header);
+            } else if ($mimeType === 'application/zip' || $mimeType === 'application/x-zip-compressed') {
+                // ตรวจสอบไฟล์ ZIP
+                $zip = new \ZipArchive();
+                $result = $zip->open($filePath, \ZipArchive::CHECKCONS);
+                if ($result === TRUE) {
+                    $zip->close();
+                    return true;
+                }
+                return false;
+            } else if ($mimeType === 'application/pdf') {
+                // ตรวจสอบไฟล์ PDF
+                $handle = @fopen($filePath, 'rb');
+                if ($handle === false) {
+                    return false;
+                }
+                $line = fgets($handle);
+                fclose($handle);
+                return strpos($line, '%PDF-') === 0;
+            }
 
-        return json_encode($response);
+            // สำหรับไฟล์ประเภทอื่นๆ
+            $handle = @fopen($filePath, 'rb');
+            if ($handle === false) {
+                return false;
+            }
+            fclose($handle);
+            return true;
+        } catch (\Exception $e) {
+            error_log("File validation error: " . $e->getMessage());
+            return false;
+        }
     }
 
     private function getUploadErrorMessage($errorCode) {
@@ -325,50 +309,6 @@ class FileController
                 return 'File upload stopped by extension';
             default:
                 return 'Unknown upload error';
-        }
-    }
-
-    private function isFileValid($filePath, $mimeType) {
-        try {
-            // Basic file integrity check
-            if (!is_readable($filePath) || filesize($filePath) === 0) {
-                return false;
-            }
-
-            // Additional checks based on file type
-            if (strpos($mimeType, 'image/') === 0) {
-                // Verify image files
-                $imageInfo = @getimagesize($filePath);
-                return $imageInfo !== false;
-            } else if (strpos($mimeType, 'video/') === 0) {
-                // Basic video file check (just check if we can open it)
-                $handle = @fopen($filePath, 'rb');
-                if ($handle === false) {
-                    return false;
-                }
-                fclose($handle);
-                return true;
-            } else if ($mimeType === 'application/pdf') {
-                // Basic PDF validation
-                $handle = @fopen($filePath, 'rb');
-                if ($handle === false) {
-                    return false;
-                }
-                $line = fgets($handle);
-                fclose($handle);
-                return strpos($line, '%PDF-') === 0;
-            }
-
-            // For other file types, just check if we can open them
-            $handle = @fopen($filePath, 'rb');
-            if ($handle === false) {
-                return false;
-            }
-            fclose($handle);
-            return true;
-        } catch (\Exception $e) {
-            error_log("File validation error: " . $e->getMessage());
-            return false;
         }
     }
 
