@@ -350,59 +350,79 @@
             });
 
             // Event Listeners
-            playPauseBtn.addEventListener('click', () => {
+            let isPlayPending = false;
+
+            function togglePlayPause() {
+                if (isPlayPending) return; // ป้องกันการกดซ้ำระหว่างกำลังประมวลผล
+
                 if (video.paused) {
-                    // เช็คว่าวิดีโอพร้อมเล่นหรือยัง
-                    if (video.readyState >= 3) {
-                        video.play();
-                        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                        startControlsTimer();
-                    }
+                    isPlayPending = true;
+                    video.play()
+                        .then(() => {
+                            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                            startControlsTimer();
+                        })
+                        .catch((error) => {
+                            if (error.name !== 'AbortError') {
+                                console.error('Error playing video:', error);
+                            }
+                            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        })
+                        .finally(() => {
+                            isPlayPending = false;
+                        });
                 } else {
                     video.pause();
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                 }
+            }
+
+            playPauseBtn.addEventListener('click', togglePlayPause);
+
+            // Timeline handling
+            let isSeeking = false;
+            
+            progressBar.addEventListener('mousedown', (e) => {
+                isSeeking = true;
+                video.pause(); // หยุดวิดีโอระหว่างการเลือกเวลา
+                updateVideoProgress(e);
             });
 
-            video.addEventListener('loadedmetadata', () => {
-                durationDisplay.textContent = formatTime(video.duration);
+            document.addEventListener('mousemove', (e) => {
+                if (isSeeking) {
+                    updateVideoProgress(e);
+                }
             });
 
-            video.addEventListener('timeupdate', updateProgress);
-
-            video.addEventListener('play', () => {
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                playeff.classList.remove('hidden');
-                stopeff.classList.add('hidden');
-                setTimeout(() => {
-                    playeff.classList.add('hidden');
-                }, 300);
-                startControlsTimer();
+            document.addEventListener('mouseup', () => {
+                if (isSeeking) {
+                    isSeeking = false;
+                    if (!video.paused) { // ถ้าวิดีโอกำลังเล่นอยู่ก่อนหน้า
+                        video.play()
+                            .catch(error => {
+                                if (error.name !== 'AbortError') {
+                                    console.error('Error resuming video:', error);
+                                }
+                            });
+                    }
+                }
             });
 
-            video.addEventListener('pause', () => {
-                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-                playeff.classList.add('hidden');
-                stopeff.classList.remove('hidden');
-                setTimeout(() => {
-                    stopeff.classList.add('hidden');
-                }, 300);
-                showControls();
-            });
+            function updateVideoProgress(e) {
+                const rect = progressBar.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                video.currentTime = pos * video.duration;
+                progress.style.width = `${pos * 100}%`;
+                currentTimeDisplay.textContent = formatTime(video.currentTime);
+            }
 
-            // เพิ่ม loading indicator
-            video.addEventListener('waiting', function() {
-                // แสดง loading effect ถ้าต้องการ
-                playeff.classList.add('hidden');
-                stopeff.classList.add('hidden');
-            });
-
-            video.addEventListener('playing', function() {
-                // ซ่อน loading effect
-                playeff.classList.remove('hidden');
-                setTimeout(() => {
-                    playeff.classList.add('hidden');
-                }, 300);
+            // Update progress without seeking
+            video.addEventListener('timeupdate', () => {
+                if (!isSeeking) {
+                    const percent = (video.currentTime / video.duration) * 100;
+                    progress.style.width = `${percent}%`;
+                    currentTimeDisplay.textContent = formatTime(video.currentTime);
+                }
             });
 
             // Volume control
@@ -427,14 +447,6 @@
                         '<i class="fas fa-volume-up"></i>';
                 });
             }
-
-            // Progress bar control
-            progressBar.addEventListener('click', (e) => {
-                const rect = progressBar.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const percent = x / rect.width;
-                video.currentTime = percent * video.duration;
-            });
 
             // Fullscreen control
             fullscreenBtn.addEventListener('click', () => {
@@ -553,6 +565,51 @@
             window.addEventListener('beforeunload', function() {
                 if (!video.paused) {
                     video.pause();
+                }
+            });
+
+            video.addEventListener('loadedmetadata', () => {
+                durationDisplay.textContent = formatTime(video.duration);
+            });
+
+            video.addEventListener('play', () => {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                if (!isSeeking) {
+                    playeff.classList.remove('hidden');
+                    stopeff.classList.add('hidden');
+                    setTimeout(() => {
+                        playeff.classList.add('hidden');
+                    }, 300);
+                }
+                startControlsTimer();
+            });
+
+            video.addEventListener('pause', () => {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                if (!isSeeking) {
+                    playeff.classList.add('hidden');
+                    stopeff.classList.remove('hidden');
+                    setTimeout(() => {
+                        stopeff.classList.add('hidden');
+                    }, 300);
+                }
+                showControls();
+            });
+
+            // Loading indicator
+            video.addEventListener('waiting', function() {
+                if (!isSeeking) {
+                    playeff.classList.add('hidden');
+                    stopeff.classList.add('hidden');
+                }
+            });
+
+            video.addEventListener('playing', function() {
+                if (!isSeeking) {
+                    playeff.classList.remove('hidden');
+                    setTimeout(() => {
+                        playeff.classList.add('hidden');
+                    }, 300);
                 }
             });
         });
