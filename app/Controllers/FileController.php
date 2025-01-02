@@ -536,7 +536,7 @@ class FileController
 
     public function embedPlayer($fileName, $fileExtension)
     {
-        $file = $this->getFile($fileName);
+        $file = $this->get_file_data($fileName);
         if (!$file) {
             return response('File not found', 404);
         }
