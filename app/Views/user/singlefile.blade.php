@@ -404,61 +404,32 @@
                 }
             }
 
-            // กำหนดค่าเริ่มต้นสำหรับการโหลดวิดีโอ
-            video.preload = 'metadata'; // โหลดแค่ metadata ก่อน
-            video.addEventListener('loadedmetadata', () => {
-                // เมื่อโหลด metadata เสร็จ ค่อยตั้งค่า preload เป็น 'auto'
-                video.preload = 'auto';
+            // Set video properties for faster loading
+            video.preload = "auto";
+            video.addEventListener('canplay', function() {
+                // วิดีโอพร้อมเล่นแล้ว
+                playPauseBtn.disabled = false;
             });
 
-            // ตั้งค่า video source ด้วย blob URL เพื่อให้ยกเลิกได้ง่าย
-            let videoSource = video.src;
-            let mediaSource = null;
+            // แสดง loading ทันทีที่เริ่มโหลดวิดีโอ
+            showLoading();
 
-            function setupVideo() {
-                if (window.MediaSource || window.WebKitMediaSource) {
-                    mediaSource = new (window.MediaSource || window.WebKitMediaSource)();
-                    video.src = URL.createObjectURL(mediaSource);
-                } else {
-                    video.src = videoSource;
-                }
+            video.addEventListener('loadstart', showLoading);
+            video.addEventListener('waiting', showLoading);
+            video.addEventListener('seeking', showLoading);
+            video.addEventListener('stalled', showLoading);
+
+            video.addEventListener('canplay', hideLoading);
+            video.addEventListener('playing', hideLoading);
+            video.addEventListener('seeked', hideLoading);
+            video.addEventListener('error', hideLoading);
+
+            // เพิ่มการตรวจสอบสถานะการโหลดเริ่มต้น
+            if (video.readyState >= 3) { // HAVE_FUTURE_DATA
+                hideLoading();
+            } else {
+                showLoading();
             }
-
-            setupVideo();
-
-            // Cleanup function
-            function cleanupVideo() {
-                if (video) {
-                    video.pause();
-                    video.src = '';
-                    video.load();
-                    
-                    // ยกเลิก media source ถ้ามี
-                    if (mediaSource) {
-                        if (mediaSource.readyState === 'open') {
-                            mediaSource.endOfStream();
-                        }
-                        URL.revokeObjectURL(video.src);
-                        mediaSource = null;
-                    }
-
-                    // ยกเลิก request ที่กำลังทำอยู่
-                    if (window.stop) {
-                        window.stop();
-                    }
-                }
-            }
-
-            // จัดการเมื่อออกจากหน้า
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    cleanupVideo();
-                }
-            });
-
-            window.addEventListener('beforeunload', cleanupVideo);
-            window.addEventListener('unload', cleanupVideo);
-            window.addEventListener('pagehide', cleanupVideo);
 
             // Event Listeners
             let isPlayPending = false;
@@ -688,19 +659,29 @@
             function cleanupVideo() {
                 if (video) {
                     video.pause();
+                    // ลบ event listeners
+                    video.onplay = null;
+                    video.onpause = null;
+                    video.onwaiting = null;
+                    video.oncanplay = null;
+                    video.onplaying = null;
+                    video.onseeking = null;
+                    video.onseeked = null;
+                    video.ontimeupdate = null;
+                    video.onprogress = null;
+                    // หยุดการโหลดวิดีโอ
                     video.src = '';
-                    video.removeAttribute('src'); 
                     video.load();
                 }
             }
 
-            // ทำความสะอาดทรัพยากรเมื่อออกจากหน้า
-            window.addEventListener('pagehide', cleanupVideo);
+            // ไม่ต้องใช้ beforeunload event เพราะอาจทำให้ติดตอนเปลี่ยนหน้า
             window.addEventListener('unload', cleanupVideo);
 
-            // ถ้ามีการใช้ turbolinks หรือ pjax
-            document.addEventListener('turbolinks:before-visit', cleanupVideo);
-            document.addEventListener('pjax:beforeReplace', cleanupVideo);
+            // เพิ่มการจัดการเมื่อ component unmount (ถ้าใช้ framework)
+            if (typeof window.removeEventListener === 'function') {
+                window.addEventListener('unmount', cleanupVideo);
+            }
 
             video.addEventListener('loadedmetadata', () => {
                 durationDisplay.textContent = formatTime(video.duration);
