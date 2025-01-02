@@ -1,6 +1,6 @@
 @extends('user.layout')
 @section('head')
-    <title>Upload - {{ NAME() }}</title>
+    <title>Upload | {{ NAME() }}</title>
 @endsection
 @section('content')
     <div class="mt-20 max-w-2xl mx-auto ">

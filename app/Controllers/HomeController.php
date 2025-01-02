@@ -28,7 +28,14 @@ class HomeController
     public function share($id)
     {
         $file = $this->sql->single("SELECT *,CONCAT(`users`.`u_fname`,' ',`users`.`u_lname`) as `u_fullname` FROM `files` JOIN `users` ON `files`.u_id=`users`.`u_id` WHERE `file_id`=?", [$id], PDO::FETCH_OBJ);
-        return VIEW('user.singlefile', ['file' => $file]);
+        if(isset($file->file_id)){
+            return VIEW('user.singlefile', ['file' => $file]);
+      
+        }else{
+            http_response_code(404);
+           
+            exit();
+        }
     }
     public function login()
     {

@@ -27,3 +27,9 @@ addRouteMiddleware('get', '/register', 'App\Middlewares\LoginMiddleware@checkalr
 addRouteMiddleware('get', '/upload', 'App\Middlewares\LoginMiddleware@handle');
 addRouteMiddleware('get', '/myfile', 'App\Middlewares\LoginMiddleware@handle');
 addRouteMiddleware('get', '/profile', 'App\Middlewares\LoginMiddleware@handle');
+
+$router->set404(function() {
+    header('HTTP/1.1 404 Not Found');
+   
+    exit();
+});

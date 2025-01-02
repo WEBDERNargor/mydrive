@@ -1,7 +1,7 @@
 @extends('user.layout')
 
 @section('head')
-    <title>{{ NAME() }}</title>
+    <title>profile | {{ NAME() }}</title>
 @endsection
 
 @section('content')

@@ -8,8 +8,9 @@
     $service = new ServiceController();
     $token = getCookieValue('login_token');
     if ($file->file_public == 0 && $token == null) {
-    http_response_code(403);
-    echo 'You are not authorized to view this file.';
+    http_response_code(404);
+    header('HTTP/1.1 404 Not Found');
+    echo "error page no found";
     exit();
 }
 
@@ -17,8 +18,9 @@
         $user_login = $service->verifyTokenServer($token);
     }
     if($file->file_public == 0 and $user_login['u_id'] != $file->u_id){
-        http_response_code(403);
-        echo 'You are not authorized to view this file.';
+        http_response_code(404);
+        header('HTTP/1.1 404 Not Found');
+        echo "error page no found";
         exit();
 
     }

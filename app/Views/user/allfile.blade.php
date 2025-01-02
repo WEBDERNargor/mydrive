@@ -5,7 +5,7 @@
     @endphp
 @endsection
 @section('head')
-    <title>{{ NAME() }}</title>
+    <title>Files | {{ NAME() }}</title>
 @endsection
 @section('content')
     <div class="max-w-4xl mx-auto  p-4 bg-white rounded-lg shadow-lg  mt-[80px]">
