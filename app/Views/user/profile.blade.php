@@ -104,7 +104,7 @@
                 url: "{{ route('change_password_api') }}",
                 type: "POST",
                 headers: {
-                    'Authorization': 'Bearer ' + token
+                    'authorization': 'Bearer ' + token
                 },
                 data: {
                     password: password,

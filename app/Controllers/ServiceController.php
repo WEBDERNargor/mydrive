@@ -93,7 +93,7 @@ class ServiceController
     public function verifyUser()
     {
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
+        $token = $headers['authorization'] ?? null;
 
         if (!$token) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
@@ -158,7 +158,7 @@ class ServiceController
     public function change_password()
     {
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
+        $token = $headers['authorization'] ?? null;
 
         if (!$token) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);

@@ -39,7 +39,7 @@
                 url: "{{ route('getallfile_api') }}",
                 type: "POST",
                 headers: {
-                    'Authorization': 'Bearer ' + token
+                    'authorization': 'Bearer ' + token
                 },
                 success: function(response) {
                     if (response.status == 'success') {
@@ -116,7 +116,7 @@
                         url: "{{ route('deletefile_api') }}",
                         type: "DELETE",
                         headers: {
-                            'Authorization': 'Bearer ' + token
+                            'authorization': 'Bearer ' + token
                         },
                         data: {
                             id: id
@@ -168,7 +168,7 @@
             url: "{{ route('updatefilepublic_api') }}",
             type: "PATCH",
             headers: {
-                'Authorization': 'Bearer ' + token
+                'authorization': 'Bearer ' + token
             },
             data: {
                 id: id,

@@ -92,7 +92,7 @@
                     const response = await fetch('/api/cleanup-upload', {
                         method: 'POST',
                         headers: {
-                            'Authorization': 'Bearer ' + token
+                            'authorization': 'Bearer ' + token
                         },
                         body: formData
                     });
@@ -266,7 +266,7 @@
                         processData: false,
                         contentType: false,
                         headers: {
-                            'Authorization': 'Bearer ' + token
+                            'authorization': 'Bearer ' + token
                         },
                         xhr: function() {
                             let xhr = new window.XMLHttpRequest();
@@ -371,7 +371,7 @@
                         fileName: fileName
                     },
                     headers: {
-                        'Authorization': 'Bearer ' + token
+                        'authorization': 'Bearer ' + token
                     },
                     error: function(xhr, status, error) {
                         Swal.fire({

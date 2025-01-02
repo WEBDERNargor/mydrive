@@ -30,14 +30,14 @@ class FileController
     public function get_file_data()
     {
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
+        $token = $headers['authorization'] ?? null;
         if (!$token) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token","head"=>$headers], 401);
         }
         $token = str_replace('Bearer ', '', $token);
         $user = $this->service->verifyTokenServer($token);
         if (!isset($user['u_id'])) {
-            return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ","head"=>$headers], 401);
+            return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ"], 401);
 
         }
         $res = $this->sql->param("SELECT * FROM files WHERE u_id=?", [$user['u_id']]);
@@ -94,7 +94,7 @@ class FileController
     {
         header("Content-type: application/json; charset=utf-8");
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
+        $token = $headers['authorization'] ?? null;
         $token = str_replace('Bearer ', '', $token);
         $user = $this->service->verifyTokenServer($token);
         if (!isset($user['u_id'])) {
@@ -359,7 +359,7 @@ class FileController
     {
         header("Content-type: application/json; charset=utf-8");
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
+        $token = $headers['authorization'] ?? null;
         $token = str_replace('Bearer ', '', $token);
         $user = $this->service->verifyTokenServer($token);
         if (!isset($user['u_id'])) {
@@ -397,7 +397,7 @@ class FileController
     public function deletefile_api()
     {
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
+        $token = $headers['authorization'] ?? null;
         if ($token == null) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
         }
@@ -438,7 +438,7 @@ class FileController
     public function updatefilepublic_api()
     {
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
+        $token = $headers['authorization'] ?? null;
         if ($token == null) {
             return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
         }
