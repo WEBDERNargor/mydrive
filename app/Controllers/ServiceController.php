@@ -32,7 +32,7 @@ class ServiceController
             if ($res->rowCount() > 0) {
                 $user = $res->fetch(PDO::FETCH_OBJ);
                 if (password_verify($password . $user->u_salt, $user->u_password)) {
-                    $token = $this->generateJWT($user->u_id, (1 * 24 * 60 * 60 * 1000));
+                    $token = $this->generateJWT($user->u_id, (365 * 24 * 60 * 60 * 1000));
                     $this->jsonResponse(['status' => 'success', 'message' => 'Login successful', "token" => $token]);
                 } else {
                     $this->jsonResponse(['status' => 'error', 'message' => 'Invalid password'], 401);

@@ -57,7 +57,7 @@
 
 
     <!-- Modal -->
-    <div id="myModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div id="myModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50  z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
             <h2 class="text-2xl font-semibold mb-4">Change Password</h2>
             <form id="change_password_form" action="" class="flex flex-col">
@@ -75,8 +75,11 @@
 @endsection
 @section('scripts')
     <script>
+        const modal = document.getElementById('myModal');
+        modal.classList.add('hidden');
+
         function toggleModal() {
-            const modal = document.getElementById('myModal');
+
             modal.classList.toggle('hidden');
         }
         var token = getCookie('login_token');

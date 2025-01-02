@@ -39,7 +39,7 @@
                 data: data,
                 success: function(response) {
                     if (response.status == "success") {
-                        setCookie("login_token", response.token, 1);
+                        setCookie("login_token", response.token, 365);
                         @if (isset($page))
                             window.location.href = "{{ route($page) }}";
                         @else
