@@ -404,32 +404,61 @@
                 }
             }
 
-            // Set video properties for faster loading
-            video.preload = "auto";
-            video.addEventListener('canplay', function() {
-                // วิดีโอพร้อมเล่นแล้ว
-                playPauseBtn.disabled = false;
+            // กำหนดค่าเริ่มต้นสำหรับการโหลดวิดีโอ
+            video.preload = 'metadata'; // โหลดแค่ metadata ก่อน
+            video.addEventListener('loadedmetadata', () => {
+                // เมื่อโหลด metadata เสร็จ ค่อยตั้งค่า preload เป็น 'auto'
+                video.preload = 'auto';
             });
 
-            // แสดง loading ทันทีที่เริ่มโหลดวิดีโอ
-            showLoading();
+            // ตั้งค่า video source ด้วย blob URL เพื่อให้ยกเลิกได้ง่าย
+            let videoSource = video.src;
+            let mediaSource = null;
 
-            video.addEventListener('loadstart', showLoading);
-            video.addEventListener('waiting', showLoading);
-            video.addEventListener('seeking', showLoading);
-            video.addEventListener('stalled', showLoading);
-
-            video.addEventListener('canplay', hideLoading);
-            video.addEventListener('playing', hideLoading);
-            video.addEventListener('seeked', hideLoading);
-            video.addEventListener('error', hideLoading);
-
-            // เพิ่มการตรวจสอบสถานะการโหลดเริ่มต้น
-            if (video.readyState >= 3) { // HAVE_FUTURE_DATA
-                hideLoading();
-            } else {
-                showLoading();
+            function setupVideo() {
+                if (window.MediaSource || window.WebKitMediaSource) {
+                    mediaSource = new (window.MediaSource || window.WebKitMediaSource)();
+                    video.src = URL.createObjectURL(mediaSource);
+                } else {
+                    video.src = videoSource;
+                }
             }
+
+            setupVideo();
+
+            // Cleanup function
+            function cleanupVideo() {
+                if (video) {
+                    video.pause();
+                    video.src = '';
+                    video.load();
+                    
+                    // ยกเลิก media source ถ้ามี
+                    if (mediaSource) {
+                        if (mediaSource.readyState === 'open') {
+                            mediaSource.endOfStream();
+                        }
+                        URL.revokeObjectURL(video.src);
+                        mediaSource = null;
+                    }
+
+                    // ยกเลิก request ที่กำลังทำอยู่
+                    if (window.stop) {
+                        window.stop();
+                    }
+                }
+            }
+
+            // จัดการเมื่อออกจากหน้า
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    cleanupVideo();
+                }
+            });
+
+            window.addEventListener('beforeunload', cleanupVideo);
+            window.addEventListener('unload', cleanupVideo);
+            window.addEventListener('pagehide', cleanupVideo);
 
             // Event Listeners
             let isPlayPending = false;

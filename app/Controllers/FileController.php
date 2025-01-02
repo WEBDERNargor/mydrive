@@ -379,83 +379,84 @@ class FileController
 
     public function streamVideo($filename, $filetype)
     {
-        $filePath = $this->uploadPath . $filename . "." . $filetype;
+        ignore_user_abort(false); // ให้รู้ทันทีเมื่อผู้ใช้ยกเลิก
+        set_time_limit(0);
 
-        if (!file_exists($filePath)) {
-            header("HTTP/1.0 404 Not Found");
-            exit;
+        $file = $this->getFile($filename);
+        if (!$file) {
+            return response('File not found', 404);
         }
 
-        $fileSize = filesize($filePath);
-        $offset = 0;
+        $path = $this->uploadPath . $filename . "." . $filetype;
+        if (!file_exists($path)) {
+            return response('File not found', 404);
+        }
+
+        $fileSize = filesize($path);
+        $file = fopen($path, 'rb');
+
+        // ตรวจสอบ range request
+        $start = 0;
         $length = $fileSize;
+        $status = 200;
 
         if (isset($_SERVER['HTTP_RANGE'])) {
-            // Extract the range header
-            preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches);
-            $offset = intval($matches[1]);
-
-            if (isset($matches[2])) {
-                $length = intval($matches[2]) - $offset + 1;
-            } else {
-                $length = $fileSize - $offset;
+            $status = 206;
+            list($unit, $range) = explode('=', $_SERVER['HTTP_RANGE'], 2);
+            if ($unit == 'bytes') {
+                list($start, $end) = explode('-', $range);
+                $start = abs(intval($start));
+                $end = $end ? abs(intval($end)) : $fileSize - 1;
+                $length = $end - $start + 1;
             }
-
-            header('HTTP/1.1 206 Partial Content');
-            header("Content-Range: bytes $offset-" . ($offset + $length - 1) . "/$fileSize");
-        } else {
-            header('HTTP/1.1 200 OK');
         }
 
-        // Set headers for video streaming
+        // ส่ง headers
         header('Content-Type: video/' . $filetype);
-        header('Content-Length: ' . $length);
         header('Accept-Ranges: bytes');
-        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Content-Length: ' . $length);
+        
+        if ($status == 206) {
+            header('HTTP/1.1 206 Partial Content');
+            header('Content-Range: bytes ' . $start . '-' . ($start + $length - 1) . '/' . $fileSize);
+        }
 
-        // Open file for reading
-        $file = fopen($filePath, 'rb');
-
-        // Seek to the requested offset
-        fseek($file, $offset);
+        // ปิด output buffering
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
 
         // Stream with error handling
-        try {
-            while ($length > 0 && !feof($file) && !connection_aborted()) {
-                $bytesToRead = min(512 * 1024, $length);
-                $data = fread($file, $bytesToRead);
-                
-                if ($data === false) {
-                    break;
-                }
-                
-                // Check for client disconnect before sending data
-                if (connection_status() !== CONNECTION_NORMAL || connection_aborted()) {
-                    break;
-                }
+        if (fseek($file, $start) === 0) {
+            $chunkSize = 256 * 1024; // ลดขนาด chunk ลงเพื่อให้เริ่มเล่นเร็วขึ้น
+            $buffer = '';
+            
+            try {
+                while (!feof($file) && ($p = ftell($file)) <= $end) {
+                    if (connection_aborted()) {
+                        break;
+                    }
 
-                echo $data;
-                
-                // Flush output buffer immediately
-                if (ob_get_level() > 0) {
-                    ob_flush();
+                    if ($p + $chunkSize > $end) {
+                        $chunkSize = $end - $p + 1;
+                    }
+
+                    $buffer = fread($file, $chunkSize);
+                    if ($buffer === false) {
+                        break;
+                    }
+
+                    echo $buffer;
+                    flush();
+
+                    // เช็คการยกเลิกทุกครั้งหลังส่งข้อมูล
+                    if (connection_aborted()) {
+                        break;
+                    }
                 }
-                flush();
-                
-                $length -= strlen($data);
-            }
-        } catch (Exception $e) {
-            // Log error if needed
-        } finally {
-            // Always close the file handle
-            if (is_resource($file)) {
+            } finally {
                 fclose($file);
             }
-        }
-        
-        // Clear output buffer and end response
-        if (ob_get_level() > 0) {
-            ob_end_clean();
         }
         exit;
     }
