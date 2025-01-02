@@ -606,53 +606,40 @@
 
             video.addEventListener('volumechange', saveVolumeState);
 
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                isMobile = window.innerWidth <= 991;
+            // Handle page visibility and navigation
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && video) {
+                    video.pause();
+                }
             });
 
-            // Cleanup function
-            function cleanup() {
+            // Cleanup video resources
+            function cleanupVideo() {
                 if (video) {
                     video.pause();
+                    // ลบ event listeners
+                    video.onplay = null;
+                    video.onpause = null;
+                    video.onwaiting = null;
+                    video.oncanplay = null;
+                    video.onplaying = null;
+                    video.onseeking = null;
+                    video.onseeked = null;
+                    video.ontimeupdate = null;
+                    video.onprogress = null;
+                    // หยุดการโหลดวิดีโอ
+                    video.src = '';
+                    video.load();
                 }
             }
 
-            // Handle page visibility change
-            let videoElement = null;
+            // ไม่ต้องใช้ beforeunload event เพราะอาจทำให้ติดตอนเปลี่ยนหน้า
+            window.addEventListener('unload', cleanupVideo);
 
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
-                    if (video) {
-                        video.pause();
-                        videoElement = video;
-                        video = null;
-                    }
-                } else {
-                    if (videoElement) {
-                        video = videoElement;
-                        videoElement = null;
-                    }
-                }
-            });
-
-            // Cleanup when leaving page
-            window.addEventListener('beforeunload', function() {
-                if (video) {
-                    video.pause();
-                    video.src = '';
-                    video.load();
-                }
-            });
-
-            // Release resources when navigating away
-            window.addEventListener('unload', function() {
-                if (video) {
-                    video.pause();
-                    video.src = '';
-                    video.load();
-                }
-            });
+            // เพิ่มการจัดการเมื่อ component unmount (ถ้าใช้ framework)
+            if (typeof window.removeEventListener === 'function') {
+                window.addEventListener('unmount', cleanupVideo);
+            }
 
             video.addEventListener('loadedmetadata', () => {
                 durationDisplay.textContent = formatTime(video.duration);
