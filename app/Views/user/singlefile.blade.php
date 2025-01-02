@@ -659,29 +659,19 @@
             function cleanupVideo() {
                 if (video) {
                     video.pause();
-                    // ลบ event listeners
-                    video.onplay = null;
-                    video.onpause = null;
-                    video.onwaiting = null;
-                    video.oncanplay = null;
-                    video.onplaying = null;
-                    video.onseeking = null;
-                    video.onseeked = null;
-                    video.ontimeupdate = null;
-                    video.onprogress = null;
-                    // หยุดการโหลดวิดีโอ
                     video.src = '';
+                    video.removeAttribute('src'); 
                     video.load();
                 }
             }
 
-            // ไม่ต้องใช้ beforeunload event เพราะอาจทำให้ติดตอนเปลี่ยนหน้า
+            // ทำความสะอาดทรัพยากรเมื่อออกจากหน้า
+            window.addEventListener('pagehide', cleanupVideo);
             window.addEventListener('unload', cleanupVideo);
 
-            // เพิ่มการจัดการเมื่อ component unmount (ถ้าใช้ framework)
-            if (typeof window.removeEventListener === 'function') {
-                window.addEventListener('unmount', cleanupVideo);
-            }
+            // ถ้ามีการใช้ turbolinks หรือ pjax
+            document.addEventListener('turbolinks:before-visit', cleanupVideo);
+            document.addEventListener('pjax:beforeReplace', cleanupVideo);
 
             video.addEventListener('loadedmetadata', () => {
                 durationDisplay.textContent = formatTime(video.duration);

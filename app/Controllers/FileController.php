@@ -419,40 +419,43 @@ class FileController
         // Seek to the requested offset
         fseek($file, $offset);
 
-        // Stream the video in chunks
-        $chunkSize = 512 * 1024; // 512KB chunks - optimized for smooth playback
-        $bytesRemaining = $length;
-
-        // Set timeout and keep-alive
-        set_time_limit(0);
-        header('Connection: close');
-        
-        // Disable output buffering
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-
         // Stream with error handling
         try {
-            while ($bytesRemaining > 0 && !feof($file) && !connection_aborted()) {
-                $bytesToRead = min($chunkSize, $bytesRemaining);
+            while ($length > 0 && !feof($file) && !connection_aborted()) {
+                $bytesToRead = min(512 * 1024, $length);
                 $data = fread($file, $bytesToRead);
                 
                 if ($data === false) {
                     break;
                 }
                 
-                echo $data;
-                flush();
-                
-                if (connection_status() != CONNECTION_NORMAL) {
+                // Check for client disconnect before sending data
+                if (connection_status() !== CONNECTION_NORMAL || connection_aborted()) {
                     break;
                 }
+
+                echo $data;
                 
-                $bytesRemaining -= strlen($data);
+                // Flush output buffer immediately
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+                
+                $length -= strlen($data);
             }
+        } catch (Exception $e) {
+            // Log error if needed
         } finally {
-            fclose($file);
+            // Always close the file handle
+            if (is_resource($file)) {
+                fclose($file);
+            }
+        }
+        
+        // Clear output buffer and end response
+        if (ob_get_level() > 0) {
+            ob_end_clean();
         }
         exit;
     }
