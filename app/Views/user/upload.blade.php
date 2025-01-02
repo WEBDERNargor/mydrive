@@ -129,18 +129,18 @@
                 }
             }
 
-            $('#browseButton').click(() => fileInput.click());
+            // $('#browseButton').click(() => fileInput.click());
 
-            dropzone.on('dragover', function(e) {
-                e.preventDefault();
-                $(this).addClass('border-blue-500');
-            }).on('dragleave', function() {
-                $(this).removeClass('border-blue-500');
-            }).on('drop', function(e) {
-                e.preventDefault();
-                $(this).removeClass('border-blue-500');
-                handleFiles(e.originalEvent.dataTransfer.files);
-            });
+            // dropzone.on('dragover', function(e) {
+            //     e.preventDefault();
+            //     $(this).addClass('border-blue-500');
+            // }).on('dragleave', function() {
+            //     $(this).removeClass('border-blue-500');
+            // }).on('drop', function(e) {
+            //     e.preventDefault();
+            //     $(this).removeClass('border-blue-500');
+            //     handleFiles(e.originalEvent.dataTransfer.files);
+            // });
 
             fileInput.on('change', function(e) {
                 e.preventDefault();
