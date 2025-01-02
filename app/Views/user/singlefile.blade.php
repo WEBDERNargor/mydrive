@@ -42,8 +42,8 @@
 
         .video-player {
             width: 100%;
-            height: auto;
-            display: block;
+            height: 100%;
+            cursor: pointer;
         }
 
         .video-controls {
@@ -51,22 +51,17 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-            padding: 20px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            opacity: 1;
             transition: opacity 0.3s ease;
         }
 
-        .video-controls.opacity-0 {
+        .video-controls.hidden {
             opacity: 0;
             pointer-events: none;
-        }
-
-        .video-controls.opacity-100 {
-            opacity: 1;
-            pointer-events: auto;
         }
 
         .progress-bar {
@@ -150,6 +145,7 @@
         .loading-container {
             z-index: 20;
             transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
         }
 
         .loading-spinner {
@@ -197,10 +193,6 @@
             .controls-row {
                 padding: 5px 0;
             }
-
-            .video-controls {
-                padding: 15px;
-            }
         }
     </style>
     <title>{{$file->file_name}} | {{NAME()}}</title>
@@ -222,7 +214,7 @@
 
                     <div class="flex justify-center items-center bg-gray-100 rounded-lg p-4">
                         @if ($isImage)
-                            <img src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}"
+                            <img src="{{ URL() }}/file/{{ $fileName }}/{{ $fileExtension }}"
                                 alt="{{ $file->file_name }}" class="max-w-full h-auto rounded">
                         @elseif($isVideo)
                             <div class="video-container">
@@ -391,55 +383,82 @@
 
             // Show/hide controls
             function showControls() {
-                controls.classList.remove('opacity-0');
-                controls.classList.add('opacity-100');
-                isControlsVisible = true;
-                if (!isMobile) {
-                    startControlsTimer();
+                if (!isControlsVisible) {
+                    controls.classList.remove('hidden');
+                    isControlsVisible = true;
                 }
+                startControlsTimer();
             }
 
             function hideControls() {
-                if (!video.paused && !isMobile) {
-                    controls.classList.remove('opacity-100');
-                    controls.classList.add('opacity-0');
+                if (isControlsVisible && !video.paused) {
+                    controls.classList.add('hidden');
                     isControlsVisible = false;
                 }
             }
 
             function startControlsTimer() {
                 clearTimeout(controlsTimeout);
-                if (!isMobile) {
+                if (!video.paused) {
                     controlsTimeout = setTimeout(hideControls, 3000);
                 }
             }
 
-            // Set video properties for faster loading
-            video.preload = "auto";
-            video.addEventListener('canplay', function() {
-                // วิดีโอพร้อมเล่นแล้ว
-                playPauseBtn.disabled = false;
+            // กำหนดค่าเริ่มต้นสำหรับการโหลดวิดีโอ
+            video.preload = 'metadata'; // โหลดแค่ metadata ก่อน
+            video.addEventListener('loadedmetadata', () => {
+                // เมื่อโหลด metadata เสร็จ ค่อยตั้งค่า preload เป็น 'auto'
+                video.preload = 'auto';
             });
 
-            // แสดง loading ทันทีที่เริ่มโหลดวิดีโอ
-            showLoading();
+            // ตั้งค่า video source ด้วย blob URL เพื่อให้ยกเลิกได้ง่าย
+            let videoSource = video.src;
+            let mediaSource = null;
 
-            video.addEventListener('loadstart', showLoading);
-            video.addEventListener('waiting', showLoading);
-            video.addEventListener('seeking', showLoading);
-            video.addEventListener('stalled', showLoading);
-
-            video.addEventListener('canplay', hideLoading);
-            video.addEventListener('playing', hideLoading);
-            video.addEventListener('seeked', hideLoading);
-            video.addEventListener('error', hideLoading);
-
-            // เพิ่มการตรวจสอบสถานะการโหลดเริ่มต้น
-            if (video.readyState >= 3) { // HAVE_FUTURE_DATA
-                hideLoading();
-            } else {
-                showLoading();
+            function setupVideo() {
+                if (window.MediaSource || window.WebKitMediaSource) {
+                    mediaSource = new (window.MediaSource || window.WebKitMediaSource)();
+                    video.src = URL.createObjectURL(mediaSource);
+                } else {
+                    video.src = videoSource;
+                }
             }
+
+            setupVideo();
+
+            // Cleanup function
+            function cleanupVideo() {
+                if (video) {
+                    video.pause();
+                    video.src = '';
+                    video.load();
+                    
+                    // ยกเลิก media source ถ้ามี
+                    if (mediaSource) {
+                        if (mediaSource.readyState === 'open') {
+                            mediaSource.endOfStream();
+                        }
+                        URL.revokeObjectURL(video.src);
+                        mediaSource = null;
+                    }
+
+                    // ยกเลิก request ที่กำลังทำอยู่
+                    if (window.stop) {
+                        window.stop();
+                    }
+                }
+            }
+
+            // จัดการเมื่อออกจากหน้า
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    cleanupVideo();
+                }
+            });
+
+            window.addEventListener('beforeunload', cleanupVideo);
+            window.addEventListener('unload', cleanupVideo);
+            window.addEventListener('pagehide', cleanupVideo);
 
             // Event Listeners
             let isPlayPending = false;
@@ -725,35 +744,6 @@
                     setTimeout(() => {
                         playeff.classList.add('hidden');
                     }, 300);
-                }
-            });
-
-            // อัพเดทสถานะ mobile เมื่อ resize
-            window.addEventListener('resize', () => {
-                const wasMobile = isMobile;
-                isMobile = window.innerWidth <= 991;
-                
-                // ถ้าเปลี่ยนจาก mobile เป็น desktop
-                if (wasMobile && !isMobile) {
-                    if (!video.paused) {
-                        startControlsTimer();
-                    }
-                }
-                // ถ้าเปลี่ยนจาก desktop เป็น mobile
-                else if (!wasMobile && isMobile) {
-                    showControls();
-                }
-            });
-
-            // แสดง controls เมื่อวิดีโอหยุด
-            video.addEventListener('pause', () => {
-                showControls();
-            });
-
-            // ซ่อน controls เมื่อวิดีโอเล่น (เฉพาะ desktop)
-            video.addEventListener('play', () => {
-                if (!isMobile) {
-                    startControlsTimer();
                 }
             });
         });
