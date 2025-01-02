@@ -20,6 +20,10 @@ class CustomBlade extends Blade
         $output = parent::render($view, $data, $mergeData);
         $edit1 = str_replace('<body>', "
         <script>
+
+        
+
+
 function setCookie(name, value, days) {
     var expires = \"\";
     if (days) {

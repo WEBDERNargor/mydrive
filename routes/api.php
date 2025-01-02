@@ -3,5 +3,5 @@ addRoute('post', '/api/login', 'login_api', 'App\Controllers\ServiceController@l
 addRoute('post', '/api/register', 'register_api', 'App\Controllers\ServiceController@register');
 // File routes
 addRoute('post', '/api/upload', 'upload_api', 'App\Controllers\FileController@upload');
-
 addRoute('post', '/api/upload-chunk', 'uploadchunk_api', 'App\Controllers\FileController@uploadChunk');
+addRoute('post', '/api/getfiles', 'getallfile_api', 'App\Controllers\FileController@get_file_data');

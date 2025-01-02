@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Controllers\ServiceController;
 use App\Models\Custom;
 use Intervention\Image\ImageManagerStatic as Image;
+use PDO;
 class FileController
 {
     private $uploadPath;
@@ -23,6 +24,26 @@ class FileController
         // ทำความสะอาดไฟล์ .part ที่เก่า
         $this->cleanupOldPartFiles();
     }
+
+
+
+    public function get_file_data(){
+        $headers = getallheaders();
+        $token = $headers['Authorization'] ?? null;
+        if (!$token) {
+            return $this->jsonResponse(["status" => "error", "message" => "ไม่พบ token"], 401);
+        }
+        $token = str_replace('Bearer ', '', $token);
+        $user=$this->service->verifyTokenServer($token);
+        if(!isset($user['u_id'])){
+            return $this->jsonResponse(["status" => "error", "message" => "token ไม่ถูกต้องหรือหมดอายุ"], 401);
+
+        }
+        $res=$this->sql->param("SELECT * FROM files WHERE u_id=?",[$user['u_id']]);
+        $fetch=$res->fetchAll(PDO::FETCH_ASSOC);
+        return $this->jsonResponse(["status" => "success", "message" => "load data successfully","data"=>$fetch], 201);
+    }
+
 
     /**
      * ลบไฟล์ .part ที่เก่าเกิน 24 ชั่วโมง
@@ -222,9 +243,9 @@ class FileController
         return $fileArray;
     }
 
-    public function getFile($filename)
+    public function getFile($filename,$filetype)
     {
-        $filePath = $this->uploadPath . $filename;
+        $filePath = $this->uploadPath . $filename.".".$filetype;
         
         if (!file_exists($filePath)) {
             header("HTTP/1.0 404 Not Found");
@@ -244,6 +265,89 @@ class FileController
         header("Content-Length: " . filesize($filePath));
         
         readfile($filePath);
+        exit;
+    }
+
+    public function getThumnail($filename)
+    {
+        $filePath = $this->uploadPath."thumbnails/". $filename.".png";
+        
+        if (!file_exists($filePath)) {
+            header("HTTP/1.0 404 Not Found");
+            exit('File not found');
+        }
+
+        // Validate that the file is within the uploads directory
+        $realPath = realpath($filePath);
+        if (strpos($realPath, realpath($this->uploadPath)) !== 0) {
+            header("HTTP/1.0 403 Forbidden");
+            exit('Access denied');
+        }
+
+        $mimeType = mime_content_type($filePath);
+        header("Content-Type: " . $mimeType);
+        header("Content-Disposition: inline; filename=\"" . basename($filename) . "\"");
+        header("Content-Length: " . filesize($filePath));
+        
+        readfile($filePath);
+        exit;
+    }
+
+    public function streamVideo($filename, $filetype)
+    {
+        $filePath = $this->uploadPath . $filename . "." . $filetype;
+        
+        if (!file_exists($filePath)) {
+            header("HTTP/1.0 404 Not Found");
+            exit;
+        }
+
+        $fileSize = filesize($filePath);
+        $offset = 0;
+        $length = $fileSize;
+
+        if (isset($_SERVER['HTTP_RANGE'])) {
+            // Extract the range header
+            preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches);
+            $offset = intval($matches[1]);
+            
+            if (isset($matches[2])) {
+                $length = intval($matches[2]) - $offset + 1;
+            } else {
+                $length = $fileSize - $offset;
+            }
+
+            header('HTTP/1.1 206 Partial Content');
+            header("Content-Range: bytes $offset-" . ($offset + $length - 1) . "/$fileSize");
+        } else {
+            header('HTTP/1.1 200 OK');
+        }
+
+        // Set headers for video streaming
+        header('Content-Type: video/' . $filetype);
+        header('Content-Length: ' . $length);
+        header('Accept-Ranges: bytes');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        
+        // Open file for reading
+        $file = fopen($filePath, 'rb');
+        
+        // Seek to the requested offset
+        fseek($file, $offset);
+        
+        // Stream the video in chunks
+        $chunkSize = 8192; // 8KB chunks
+        $bytesRemaining = $length;
+        
+        while ($bytesRemaining > 0 && !feof($file)) {
+            $bytesToRead = min($chunkSize, $bytesRemaining);
+            $data = fread($file, $bytesToRead);
+            echo $data;
+            flush();
+            $bytesRemaining -= strlen($data);
+        }
+        
+        fclose($file);
         exit;
     }
 
@@ -279,5 +383,13 @@ class FileController
             echo json_encode(['status' => 'success', 'message' => 'No file to cleanup']);
         }
         exit();
+    }
+
+    private function jsonResponse($data, $statusCode = 200)
+    {
+        header("Content-type: application/json; charset=utf-8");
+        http_response_code($statusCode);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
     }
 }

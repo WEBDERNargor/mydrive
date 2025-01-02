@@ -36,7 +36,11 @@
            success: function(response){
                if(response.status == "success"){
                     setCookie("login_token", response.token, 1);
-                    window.location.href = "{{route('home')}}";
+                    @if(isset($page))
+                    window.location.href = "{{route($page)}}";
+                    @else
+                    window.location.href = "{{route('myfile')}}";
+                    @endif
                }else{
                    Swal.fire({
                        icon: 'error',

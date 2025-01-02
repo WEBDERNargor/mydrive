@@ -106,4 +106,23 @@ function deleteCookie($name) {
     setcookie($name, "", time() - 3600, "/"); // ตั้งเวลาหมดอายุให้ย้อนหลังไปหนึ่งชั่วโมง
 }
 
+function jsonResponse($data, $statusCode = 200)
+{
+    header("Content-type: application/json; charset=utf-8");
+    http_response_code($statusCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
+function fillterpermission($permission){
+    if($permission<=100 ){
+          return "user";
+    }elseif($permission>100 and $permission<=500){
+         return "employee";
+    }elseif($permission>500 and $permission<=9999){
+     return "admin";
+    }else{
+     return "user";
+    }
+    
+ }

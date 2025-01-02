@@ -4,6 +4,7 @@ ob_start();
 $routerlist = [];
 require_once __DIR__ . '/../vendor/autoload.php'; // โหลด autoload ของ Composer
 require_once __DIR__ . '/function.php';
+require_once __DIR__ . '/RouteHelper.php';
 use Bramus\Router\Router;
 use App\Console\Migrate;
 use App\core\CustomBlade;

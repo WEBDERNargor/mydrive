@@ -3,7 +3,7 @@ require_once __DIR__ . '/bootstrap/function.php';
 loadEnv(__DIR__ . '/.env');
 $config = require_once __DIR__ . '/config/general.php';
 set_time_limit(0); // ปิดการจำกัดเวลาสำหรับสคริปต์นี้
-$parsedUrl = parse_url($config['url']);
+$parsedUrl = parse_url($config['server_url']);
 $scheme = $parsedUrl['scheme']; // http
 $host = $parsedUrl['host'];
 $port = $parsedUrl['port']!=null && !empty( $parsedUrl['port'])?$parsedUrl['port']:'80';

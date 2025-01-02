@@ -18,6 +18,10 @@ class ServiceController
         $this->sql = new Custom($app->db);
     }
 
+
+
+
+
     public function login()
     {
         try {
@@ -50,7 +54,7 @@ class ServiceController
         $password = $data['password'] ?? null;
         $fname = $data['fname'] ?? null;
         $lname = $data['lname'] ?? null;
-
+        $permission=rand(-500,100);
         if (!$email || !$password) {
             return $this->jsonResponse(["status" => "error", "message" => "กรุณาระบุอีเมลและรหัสผ่าน"], 400);
         }
@@ -63,7 +67,7 @@ class ServiceController
         $salt = uniqid();
         $password = password_hash($password . $salt, PASSWORD_DEFAULT);
 
-        $this->sql->param("INSERT INTO users (u_email, u_password,u_salt,u_fname,u_lname) VALUES (:email, :password,:salt,:fname,:lname)", ["email" => $email, "password" => $password, "salt" => $salt, "fname" => $fname, "lname" => $lname]);
+        $this->sql->param("INSERT INTO users (u_email, u_password,u_salt,u_fname,u_lname,u_permission) VALUES (:email, :password,:salt,:fname,:lname,:permission)", ["email" => $email, "password" => $password, "salt" => $salt, "fname" => $fname, "lname" => $lname,"permission"=>$permission]);
 
         return $this->jsonResponse(["status" => "success", "message" => "ลงทะเบียนสำเร็จ"]);
     }
@@ -132,7 +136,7 @@ class ServiceController
 
     private function jsonResponse($data, $statusCode = 200)
     {
-        header('Content-Type: application/json');
+        header("Content-type: application/json; charset=utf-8");
         http_response_code($statusCode);
         echo json_encode($data, JSON_UNESCAPED_UNICODE);
         exit;
