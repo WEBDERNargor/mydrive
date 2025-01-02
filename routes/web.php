@@ -21,6 +21,7 @@ addRoute('get', '/share/{id}', 'share', 'App\Controllers\HomeController@share');
 addRoute('get', '/file/{filename}/{filetype}', 'getFile', 'App\Controllers\FileController@getFile');
 addRoute('get', '/stream/{filename}/{filetype}', 'streamVideo', 'App\Controllers\FileController@streamVideo');
 addRoute('get', '/thumnail/{filename}', 'thumnailVideo', 'App\Controllers\FileController@getThumnail');
+addRoute('get', '/embed/{filename}/{filetype}', 'embedPlayer', 'App\Controllers\FileController@embedPlayer');
 
 addRouteMiddleware('get', '/login', 'App\Middlewares\LoginMiddleware@checkalreadylogin');
 addRouteMiddleware('get', '/register', 'App\Middlewares\LoginMiddleware@checkalreadylogin');

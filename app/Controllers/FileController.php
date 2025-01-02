@@ -534,4 +534,17 @@ class FileController
         }
     }
 
+    public function embedPlayer($fileName, $fileExtension)
+    {
+        $file = $this->getFile($fileName);
+        if (!$file) {
+            return response('File not found', 404);
+        }
+
+        return view('user.embed-player', [
+            'file' => $file,
+            'fileName' => $fileName,
+            'fileExtension' => $fileExtension
+        ]);
+    }
 }

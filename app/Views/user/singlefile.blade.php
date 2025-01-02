@@ -214,62 +214,16 @@
 
                     <div class="flex justify-center items-center bg-gray-100 rounded-lg p-4">
                         @if ($isImage)
-                            <img src="{{ URL() }}/file/{{ $fileName }}/{{ $fileExtension }}"
+                            <img src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}"
                                 alt="{{ $file->file_name }}" class="max-w-full h-auto rounded">
                         @elseif($isVideo)
-                            <div class="video-container">
-                                <video class="video-player w-full h-full" playsinline
-                                    @if ($file->has_thumbnail==1) poster="{{ URL() }}/thumnail/{{ $fileName }}" @endif
-                                    src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}"
-                                    preload="auto"
-                                    controlsList="nodownload"
-                                    loading="lazy">
-                                    Your browser does not support the video tag.
-                                </video>
-                                <!-- Loading indicator แยกออกมาจาก controls -->
-                                <div class="loading-container absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 hidden">
-                                    <div class="loading-spinner text-white">
-                                        <i class="fas fa-spinner fa-3x"></i>
-                                    </div>
-                                </div>
-                                <div class="video-controls">
-                                    <div class="progress-container relative w-full h-4 bg-gray-200 rounded cursor-pointer">
-                                        <!-- Buffer bar -->
-                                        <div class="buffer-bar absolute top-0 left-0 h-full bg-gray-400 rounded opacity-50"></div>
-                                        <!-- Progress bar -->
-                                        <div class="progress absolute top-0 left-0 h-full bg-blue-500 rounded"></div>
-                                        <!-- Loading spinner -->
-                                        <div class="loading-spinner hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                            <i class="fas fa-spinner fa-spin text-blue-500"></i>
-                                        </div>
-                                    </div>
-                                    <div class="controls-row">
-                                        <div class="left-controls">
-                                            <button class="control-button play-pause" disabled>
-                                                <i class="fas fa-play"></i>
-                                            </button>
-                                            <div class="volume-container">
-                                                <button class="control-button volume">
-                                                    <i class="fas fa-volume-up"></i>
-                                                </button>
-                                                <div class="volume-slider">
-                                                    <div class="volume-level"></div>
-                                                </div>
-                                            </div>
-                                            <span class="time-display">
-                                                <span class="current-time">0:00</span>
-                                                /
-                                                <span class="duration">0:00</span>
-                                            </span>
-                                        </div>
-                                        <div class="right-controls">
-                                            <button class="control-button fullscreen">
-                                                <i class="fas fa-expand"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                </div>
+                            <div class="relative w-full aspect-video bg-black rounded overflow-hidden">
+                                <iframe 
+                                    src="{{ URL() }}/embed/{{ $fileName }}/{{ $fileExtension }}"
+                                    class="absolute top-0 left-0 w-full h-full border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen>
+                                </iframe>
                             </div>
                         @elseif($isArchive)
                             <div class="text-center">
