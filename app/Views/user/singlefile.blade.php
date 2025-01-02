@@ -539,21 +539,21 @@
             function cleanup() {
                 if (video) {
                     video.pause();
-                    video.src = '';
-                    video.load();
                 }
             }
 
             // Handle page visibility change
             document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
-                    cleanup();
+                if (document.hidden && !video.paused) {
+                    video.pause();
                 }
             });
 
             // Handle page unload
             window.addEventListener('beforeunload', function() {
-                cleanup();
+                if (!video.paused) {
+                    video.pause();
+                }
             });
         });
 
