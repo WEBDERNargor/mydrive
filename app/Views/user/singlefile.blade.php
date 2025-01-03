@@ -43,167 +43,6 @@
             width: 100%;
             height: 100%;
         }
-        .video-container {
-            position: relative;
-            width: 100%;
-            max-width: 100%;
-            background: black;
-            aspect-ratio: 16/9;
-        }
-
-        .video-player {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .video-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        .video-controls.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-            position: relative;
-            margin-bottom: 10px;
-        }
-
-        .progress-bar:hover {
-            height: 5px;
-        }
-
-        .progress {
-            height: 100%;
-            background: #ff0000;
-            position: absolute;
-            left: 0;
-            top: 0;
-            transition: width 0.1s ease-in-out;
-        }
-
-        .controls-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: white;
-        }
-
-        .left-controls,
-        .right-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .control-button {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .volume-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .volume-slider {
-            width: 80px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-            position: relative;
-        }
-
-        .volume-level {
-            height: 100%;
-            background: white;
-            position: absolute;
-            left: 0;
-            top: 0;
-        }
-
-        .time-display {
-            font-size: 14px;
-            font-family: Arial, sans-serif;
-        }
-
-        .buffer-bar {
-            transition: width 0.1s ease-in-out;
-        }
-
-        .loading-container {
-            z-index: 20;
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        .loading-spinner {
-            animation: pulse 2s infinite;
-        }
-
-        .loading-spinner i {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 0.6;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0.6;
-            }
-        }
-
-        @media (max-width: 991px) {
-            .volume-slider {
-                display: none;
-            }
-
-            .progress-bar {
-                height: 4px;
-            }
-
-            .progress-bar:hover {
-                height: 4px;
-            }
-
-            .controls-row {
-                padding: 5px 0;
-            }
-        }
     </style>
     <title>{{$file->file_name}} | {{NAME()}}</title>
 @endsection
@@ -228,8 +67,8 @@
                                 alt="{{ $file->file_name }}" class="max-w-full h-auto rounded">
                         @elseif($isVideo)
                             <div class="video-container">
-                                <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto">
-                                    <source src="{{ URL() }}/file/{{ $fileName }}/{{ $fileExtension }}" type="video/{{ $fileExtension }}" />
+                                <video id="my-video" class="video-js vjs-big-play-centered" controls preload="metadata">
+                                    <source src="{{ URL() }}/stream/{{ $fileName }}/{{ $fileExtension }}" type="video/{{ $fileExtension }}" />
                                 </video>
                             </div>
 
@@ -293,6 +132,34 @@
                     playbackRates: [0.5, 1, 1.5, 2],
                     userActions: {
                         hotkeys: true
+                    },
+                    html5: {
+                        nativeTextTracks: false,
+                        nativeAudioTracks: false,
+                        nativeVideoTracks: false,
+                        preloadTextTracks: false
+                    },
+                    controlBar: {
+                        children: [
+                            'playToggle',
+                            'volumePanel',
+                            'currentTimeDisplay',
+                            'timeDivider',
+                            'durationDisplay',
+                            'progressControl',
+                            'playbackRateMenuButton',
+                            'fullscreenToggle'
+                        ]
+                    }
+                });
+
+                // Optimize buffering
+                player.reloadSourceOnError({
+                    getSource: function(reload) {
+                        reload({
+                            src: player.currentSource().src,
+                            type: player.currentSource().type
+                        });
                     }
                 });
             }
