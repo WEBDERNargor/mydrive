@@ -134,34 +134,57 @@
                         hotkeys: true
                     },
                     html5: {
-                        nativeTextTracks: false,
-                        nativeAudioTracks: false,
-                        nativeVideoTracks: false,
-                        preloadTextTracks: false
-                    },
-                    controlBar: {
-                        children: [
-                            'playToggle',
-                            'volumePanel',
-                            'currentTimeDisplay',
-                            'timeDivider',
-                            'durationDisplay',
-                            'progressControl',
-                            'playbackRateMenuButton',
-                            'fullscreenToggle'
-                        ]
+                        preload: 'auto',
+                        overrideNative: true
                     }
                 });
 
-                // Optimize buffering
-                player.reloadSourceOnError({
-                    getSource: function(reload) {
-                        reload({
-                            src: player.currentSource().src,
-                            type: player.currentSource().type
-                        });
-                    }
+                // จัดการ seeking
+                let seekingTimeout;
+                player.on('seeking', function() {
+                    clearTimeout(seekingTimeout);
+                    seekingTimeout = setTimeout(function() {
+                        if (player.seeking()) {
+                            const currentTime = player.currentTime();
+                            player.pause();
+                            player.src(player.currentSrc());
+                            player.load();
+                            player.play().then(() => {
+                                player.currentTime(currentTime);
+                            });
+                        }
+                    }, 8000);
                 });
+
+                player.on('seeked', function() {
+                    clearTimeout(seekingTimeout);
+                });
+
+                // ปรับ buffer size
+                const videoElement = player.tech_.el_;
+                if (videoElement) {
+                    // เพิ่ม buffer size เป็น 90 วินาที
+                    videoElement.preload = 'auto';
+                    videoElement.buffered;
+                    videoElement.addEventListener('progress', function() {
+                        try {
+                            const range = 90;
+                            const currentTime = videoElement.currentTime;
+                            const duration = videoElement.duration;
+                            const buffered = videoElement.buffered;
+                            
+                            if (buffered.length > 0) {
+                                const bufferEnd = buffered.end(buffered.length - 1);
+                                if (bufferEnd < currentTime + range && currentTime < duration - range) {
+                                    videoElement.currentTime = currentTime + 1;
+                                    videoElement.currentTime = currentTime;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Buffer handling error:', e);
+                        }
+                    });
+                }
             }
 
             function copyShareLink() {
