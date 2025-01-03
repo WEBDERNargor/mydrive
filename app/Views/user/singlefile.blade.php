@@ -232,7 +232,7 @@
                                     <source src="{{ URL() }}/file/{{ $fileName }}/{{ $fileExtension }}" type="video/{{ $fileExtension }}" />
                                 </video>
                             </div>
-{{ 
+
                         @elseif($isArchive)
                             <div class="text-center">
                                 <svg class="w-24 h-24 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 24 24">
