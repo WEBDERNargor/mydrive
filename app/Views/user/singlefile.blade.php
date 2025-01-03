@@ -124,6 +124,15 @@
 @section('scripts')
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
     <script>
+        function copyShareLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy link: ', err);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             if (document.querySelector('#my-video')) {
                 var player = videojs('my-video', {
@@ -161,15 +170,6 @@
                             type: player.currentSource().type
                         });
                     }
-                });
-            }
-
-            function copyShareLink() {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(() => {
-                    alert('Link copied to clipboard!');
-                }).catch(err => {
-                    console.error('Failed to copy link: ', err);
                 });
             }
         });
